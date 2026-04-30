@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Bend</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+    <main class="app">
+        <section class="panel">
+            <h2>Axis</h2>
+            <div class="seg-row" role="group" aria-label="Bending axis">
+                <button class="seg" type="button" data-axis="horizontal">HORIZONTAL</button>
+                <button class="seg" type="button" data-axis="vertical">VERTICAL</button>
+                <button class="seg" type="button" data-axis="custom">CUSTOM</button>
+            </div>
+            <input id="axis" type="hidden" value="horizontal">
+
+            <label class="field" data-show-when="axis-custom">
+                <span class="field-label">Angle (deg)</span>
+                <div class="slider-capsule">
+                    <input id="customAngle" type="number" min="-360" max="360" step="1" value="0">
+                    <div class="slider-track-area">
+                        <input id="customAngleRange" type="range" min="-360" max="360" step="1" value="0">
+                    </div>
+                    <button id="customAngleResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+        </section>
+
+        <section class="panel">
+            <h2>Bend</h2>
+
+            <label class="field">
+                <span class="field-label">Subdivisions (0-7)</span>
+                <div class="slider-capsule">
+                    <input id="subdivisions" type="number" min="0" max="7" step="1" value="0">
+                    <div class="slider-track-area">
+                        <input id="subdivisionsRange" type="range" min="0" max="7" step="1" value="0">
+                    </div>
+                    <button id="subdivisionsResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+
+            <label class="field">
+                <span class="field-label">Bend Angle (deg)</span>
+                <div class="slider-capsule">
+                    <input id="bendAngle" type="number" min="-1080" max="1080" step="1" value="360">
+                    <div class="slider-track-area">
+                        <input id="bendAngleRange" type="range" min="-1080" max="1080" step="1" value="360">
+                    </div>
+                    <button id="bendAngleResetBtn" class="slider-reset-btn" type="button" title="Reset to 360">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+
+            <label class="field">
+                <span class="field-label">Limit (%)</span>
+                <div class="slider-capsule">
+                    <input id="limit" type="number" min="0" max="100" step="1" value="100">
+                    <div class="slider-track-area">
+                        <input id="limitRange" type="range" min="0" max="100" step="1" value="100">
+                    </div>
+                    <button id="limitResetBtn" class="slider-reset-btn" type="button" title="Reset to 100">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+
+            <label class="field">
+                <span class="field-label">Center (%)</span>
+                <div class="slider-capsule">
+                    <input id="center" type="number" min="0" max="100" step="1" value="50">
+                    <div class="slider-track-area">
+                        <input id="centerRange" type="range" min="0" max="100" step="1" value="50">
+                    </div>
+                    <button id="centerResetBtn" class="slider-reset-btn" type="button" title="Reset to 50">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+
+            <label class="field">
+                <span class="field-label">Offset (Radius)</span>
+                <div class="slider-capsule">
+                    <input id="offset" type="number" min="-2000" max="2000" step="1" value="0">
+                    <div class="slider-track-area">
+                        <input id="offsetRange" type="range" min="-500" max="500" step="1" value="0">
+                    </div>
+                    <button id="offsetResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+
+            <div class="field">
+                <span class="field-label">Direction</span>
+                <div class="seg-row" role="group" aria-label="Direction">
+                    <button class="seg" type="button" data-direction="normal">NORMAL</button>
+                    <button class="seg" type="button" data-direction="reverse">REVERSE</button>
+                </div>
+                <input id="direction" type="hidden" value="normal">
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Helix</h2>
+            <label class="field">
+                <span class="field-label">Radial Expand</span>
+                <div class="slider-capsule">
+                    <input id="radialExpand" type="number" min="-1000" max="1000" step="1" value="0">
+                    <div class="slider-track-area">
+                        <input id="radialExpandRange" type="range" min="-200" max="200" step="1" value="0">
+                    </div>
+                    <button id="radialExpandResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+
+            <label class="field">
+                <span class="field-label">Axis Shift (Z)</span>
+                <div class="slider-capsule">
+                    <input id="axisShift" type="number" min="-2000" max="2000" step="1" value="0">
+                    <div class="slider-track-area">
+                        <input id="axisShiftRange" type="range" min="-500" max="500" step="1" value="0">
+                    </div>
+                    <button id="axisShiftResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+        </section>
+
+        <section class="panel">
+            <div class="action-row">
+                <button id="applyBtn" class="primary action-btn" type="button">APPLY</button>
+                <button id="resetBtn" class="action-btn" type="button">RESET</button>
+            </div>
+            <p class="sub">APPLY replaces the selection with the bent result. Use Ctrl+Z to undo. RESET sets all parameters back to defaults.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">High Subdivisions on complex paths can take a few seconds. Bend Angle 360 = full ring.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
