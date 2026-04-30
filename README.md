@@ -35,7 +35,7 @@ PluginName/
 - [x] O'Split
 - [x] O'Connect
 - [x] O'Align
-- [ ] O'Fit
+- [x] O'Fit
 - [ ] O'Bend
 - [ ] O'Bevel
 - [ ] O'Color

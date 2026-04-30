@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Fit</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+    <main class="app">
+        <section class="panel">
+            <h2>Fit Mode</h2>
+            <div class="seg-row" role="group" aria-label="Fit mode">
+                <button class="seg" type="button" data-mode="contain" title="Proportional, fit inside">CONTAIN</button>
+                <button class="seg" type="button" data-mode="cover" title="Proportional, fill artboard">COVER</button>
+                <button class="seg" type="button" data-mode="stretch" title="Non-proportional, fill exactly">STRETCH</button>
+            </div>
+            <input id="mode" type="hidden" value="contain">
+            <p class="sub">CONTAIN keeps the whole object inside the artboard. COVER fills the artboard, possibly cropping at the edges. STRETCH ignores aspect ratio.</p>
+        </section>
+
+        <section class="panel">
+            <h2>Padding (px)</h2>
+            <div class="row-two">
+                <label class="field">
+                    <span class="field-label">Horizontal</span>
+                    <input id="padX" type="number" step="1" value="0">
+                </label>
+                <label class="field">
+                    <span class="field-label">Vertical</span>
+                    <input id="padY" type="number" step="1" value="0">
+                </label>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Align</h2>
+            <div class="align-grid" role="group" aria-label="Alignment">
+                <button class="align-cell" type="button" data-align="top-left" title="Top Left" aria-label="Top Left"></button>
+                <button class="align-cell" type="button" data-align="top-center" title="Top Center" aria-label="Top Center"></button>
+                <button class="align-cell" type="button" data-align="top-right" title="Top Right" aria-label="Top Right"></button>
+                <button class="align-cell" type="button" data-align="middle-left" title="Middle Left" aria-label="Middle Left"></button>
+                <button class="align-cell" type="button" data-align="middle-center" title="Middle Center" aria-label="Middle Center"></button>
+                <button class="align-cell" type="button" data-align="middle-right" title="Middle Right" aria-label="Middle Right"></button>
+                <button class="align-cell" type="button" data-align="bottom-left" title="Bottom Left" aria-label="Bottom Left"></button>
+                <button class="align-cell" type="button" data-align="bottom-center" title="Bottom Center" aria-label="Bottom Center"></button>
+                <button class="align-cell" type="button" data-align="bottom-right" title="Bottom Right" aria-label="Bottom Right"></button>
+            </div>
+            <input id="align" type="hidden" value="middle-center">
+        </section>
+
+        <section class="panel">
+            <button id="fitBtn" class="primary action-btn" type="button">FIT TO ARTBOARD</button>
+            <p class="sub">Each selected object is scaled and aligned independently to the active artboard.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">Resize uses uniform scaling on visible bounds (strokes, effects included).</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
