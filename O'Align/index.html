@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Align</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+    <main class="app">
+        <section class="panel">
+            <h2>Direction</h2>
+            <div class="seg-row" role="group" aria-label="Direction">
+                <button class="seg" type="button" data-direction="auto" title="Auto-snap to nearest axis">AUTO</button>
+                <button class="seg" type="button" data-direction="horizontal" title="Force horizontal">HORIZONTAL</button>
+                <button class="seg" type="button" data-direction="vertical" title="Force vertical">VERTICAL</button>
+            </div>
+            <input id="direction" type="hidden" value="auto">
+            <p class="sub">AUTO snaps to whichever axis is closer (≤45° = horizontal, otherwise vertical). HORIZONTAL/VERTICAL force a specific result.</p>
+        </section>
+
+        <section class="panel">
+            <h2>Pivot</h2>
+            <div class="seg-row" role="group" aria-label="Pivot">
+                <button class="seg" type="button" data-pivot="center" title="Rotate around object center">CENTER</button>
+                <button class="seg" type="button" data-pivot="first" title="Rotate around the first selected point">FIRST POINT</button>
+                <button class="seg" type="button" data-pivot="second" title="Rotate around the second selected point">SECOND POINT</button>
+            </div>
+            <input id="pivot" type="hidden" value="center">
+        </section>
+
+        <section class="panel">
+            <button id="alignBtn" class="primary action-btn" type="button">ALIGN</button>
+            <p class="sub">Pick 2 anchor points (Direct Selection / White Arrow) or select a guide line, then run ALIGN. The parent object rotates so the two points sit on a horizontal or vertical axis.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">The script rotates the highest non-Layer parent (Group, Compound Path, or single object).</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
