@@ -15,7 +15,7 @@
     };
 
     var buttons = {
-        selectLeaves: document.getElementById("selectLeavesBtn")
+        selectObjects: document.getElementById("selectObjectsBtn")
     };
 
     var statusEl = document.getElementById("status");
@@ -158,8 +158,8 @@
         });
     }
 
-    buttons.selectLeaves.addEventListener("click", function () {
-        runHostAction("Selecting leaves", "oselectSelectLeaves", collectConfig());
+    buttons.selectObjects.addEventListener("click", function () {
+        runHostAction("Selecting objects", "oselectSelectObjects", collectConfig());
     });
 
     restoreSettings();

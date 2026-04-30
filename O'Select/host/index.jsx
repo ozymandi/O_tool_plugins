@@ -129,7 +129,7 @@ function oselectCollectLeaves(item, config, found) {
     }
 }
 
-function oselectSelectLeaves(encodedConfig) {
+function oselectSelectObjects(encodedConfig) {
     try {
         var config = oselectValidateConfig(oselectParseConfig(encodedConfig));
         var doc = oselectEnsureDocument();
@@ -154,7 +154,7 @@ function oselectSelectLeaves(encodedConfig) {
         }
         app.redraw();
 
-        return oselectResponse(true, "Selected " + found.length + " leaf items.", { count: found.length });
+        return oselectResponse(true, "Selected " + found.length + " objects.", { count: found.length });
     } catch (error) {
         oselectLog(error.message || String(error));
         return oselectResponse(false, error.message || String(error));

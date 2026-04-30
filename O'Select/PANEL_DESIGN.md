@@ -24,7 +24,7 @@ Tracks the UI design state of the O'Select CEP panel.
   - Clipping paths
   - Hidden items
   - Locked items
-- Action: `SELECT LEAVES` (primary)
+- Action: `SELECT OBJECTS` (primary)
 - `Status`
   - Indicator dot
   - Status text
@@ -36,7 +36,7 @@ Tracks the UI design state of the O'Select CEP panel.
 - Default skip set matches the original: clipping paths, hidden, locked
 - Settings persist between sessions
 - The panel always operates on the current Illustrator selection; pre-select containers first
-- Status reports the count of items selected after each run
+- Status reports the count of objects selected after each run
 
 ## Iteration Log
 
