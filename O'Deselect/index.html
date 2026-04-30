@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Deselect</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+    <main class="app">
+        <section class="panel">
+            <h2>Mode</h2>
+            <div class="mode-segmented" role="group" aria-label="Selection mode">
+                <button class="mode-seg" type="button" data-mode="sequence" title="Sequence pattern">Sequence</button>
+                <button class="mode-seg" type="button" data-mode="random" title="Random probability">Random</button>
+            </div>
+            <input id="mode" type="hidden" value="sequence">
+        </section>
+
+        <section class="panel" data-mode-section="sequence">
+            <h2>Sequence</h2>
+            <div class="row-three">
+                <label class="field">
+                    <span class="field-label">Selected</span>
+                    <input id="selectedCount" type="number" min="0" step="1" value="1">
+                </label>
+                <label class="field">
+                    <span class="field-label">Unselected</span>
+                    <input id="unselectedCount" type="number" min="0" step="1" value="1">
+                </label>
+                <label class="field">
+                    <span class="field-label">Offset</span>
+                    <input id="offset" type="number" step="1" value="0">
+                </label>
+            </div>
+            <p class="sub">Pattern repeats across the current selection. Set the count of kept and dropped items per cycle, plus a starting offset.</p>
+        </section>
+
+        <section class="panel" data-mode-section="random">
+            <h2>Random</h2>
+            <label class="field">
+                <span class="field-label">Selection probability (%)</span>
+                <div class="slider-capsule">
+                    <input id="probability" type="number" min="0" max="100" step="1" value="50">
+                    <div class="slider-track-area">
+                        <input id="probabilityRange" type="range" min="0" max="100" step="1" value="50">
+                    </div>
+                    <button id="probabilityResetBtn" class="slider-reset-btn" type="button" title="Reset to 50%" aria-label="Reset to 50%">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <p class="sub">Each item is independently kept selected with the chosen probability.</p>
+        </section>
+
+        <section class="panel">
+            <div class="action-row">
+                <button id="applyBtn" class="primary" type="button">APPLY</button>
+                <button id="saveSelectionBtn" type="button">SAVE SELECTION</button>
+            </div>
+            <p class="sub">APPLY adjusts the current selection. SAVE SELECTION applies and opens Illustrator's Save Selection dialog.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">Works on multiple objects, or on the anchor points of a single path.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
