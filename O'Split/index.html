@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Split</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+    <main class="app">
+        <section class="panel">
+            <h2>Split Text</h2>
+            <div class="action-grid">
+                <button class="split-btn" type="button" data-mode="paragraphs">PARAGRAPHS</button>
+                <button class="split-btn" type="button" data-mode="lines">LINES</button>
+                <button class="split-btn" type="button" data-mode="words">WORDS</button>
+                <button class="split-btn" type="button" data-mode="characters">CHARACTERS</button>
+            </div>
+            <p class="sub">Splits each selected text frame using "Relative Lift Isolation" — preserves manual kerning, baseline shifts, and prevents touching letters from merging.</p>
+        </section>
+
+        <section class="panel">
+            <h2>Options</h2>
+            <label class="check">
+                <input id="keepOriginal" type="checkbox">
+                <span>Keep original (hide instead of delete)</span>
+            </label>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">Select one or more text frames, then choose a split mode.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
