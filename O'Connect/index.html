@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Connect</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+    <main class="app">
+        <section class="panel">
+            <h2>Curve</h2>
+            <label class="field">
+                <span class="field-label">Tension</span>
+                <div class="slider-capsule">
+                    <input id="tension" type="number" min="0" max="2" step="0.05" value="0.35">
+                    <div class="slider-track-area">
+                        <input id="tensionRange" type="range" min="0" max="100" step="1" value="35">
+                    </div>
+                    <button id="tensionResetBtn" class="slider-reset-btn" type="button" title="Reset to 0.35" aria-label="Reset to 0.35">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+
+            <label class="field">
+                <span class="field-label">Angle threshold (deg)</span>
+                <div class="slider-capsule">
+                    <input id="angle" type="number" min="1" max="89" step="1" value="20">
+                    <div class="slider-track-area">
+                        <input id="angleRange" type="range" min="1" max="89" step="1" value="20">
+                    </div>
+                    <button id="angleResetBtn" class="slider-reset-btn" type="button" title="Reset to 20" aria-label="Reset to 20">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <p class="sub">Tension shapes the curvature (0 = straight, 1 = round). Angle threshold controls the width of horizontal Left/Right sectors; larger means more side connections.</p>
+        </section>
+
+        <section class="panel">
+            <h2>Stroke</h2>
+            <div class="row-two">
+                <label class="field">
+                    <span class="field-label">Width (pt)</span>
+                    <input id="strokeWidth" type="number" min="0.1" step="0.1" value="2">
+                </label>
+                <label class="field">
+                    <span class="field-label">Color</span>
+                    <div class="simple-dropdown custom-select-wrapper" data-id="colorMode">
+                        <input id="colorMode" type="hidden" value="hub">
+                        <div class="custom-select ui-dropdown-toggle" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                            <span class="ui-dropdown-label">Hub stroke</span>
+                            <span class="dropdown-chevron" aria-hidden="true">
+                                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4.5 6.5L8 10L11.5 6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="custom-options ui-dropdown-list" role="listbox" aria-label="Stroke color">
+                            <div class="custom-option" data-value="hub" role="option" aria-selected="true">Hub stroke</div>
+                            <div class="custom-option" data-value="black" role="option" aria-selected="false">Black</div>
+                            <div class="custom-option" data-value="swatch" role="option" aria-selected="false">First swatch</div>
+                        </div>
+                    </div>
+                </label>
+            </div>
+        </section>
+
+        <section class="panel">
+            <button id="connectBtn" class="primary action-btn" type="button">CONNECT</button>
+            <p class="sub">Hub = front-most selected object. Other selected objects become children. Each child gets a smooth bezier curve to the hub edge facing it.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">Bring the Hub object to the front (Object &gt; Arrange &gt; Bring to Front), then select Hub + children.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
