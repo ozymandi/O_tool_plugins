@@ -29,7 +29,7 @@ PluginName/
 
 ## Список плагінів
 
-- [ ] O'Deselect
+- [x] O'Deselect
 - [ ] O'Select
 - [ ] O'Trim
 - [ ] O'Split
