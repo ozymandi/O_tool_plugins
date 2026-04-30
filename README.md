@@ -30,7 +30,7 @@ PluginName/
 ## Список плагінів
 
 - [x] O'Deselect
-- [ ] O'Select
+- [x] O'Select
 - [ ] O'Trim
 - [ ] O'Split
 - [ ] O'Connect

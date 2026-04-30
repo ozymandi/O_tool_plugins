@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Select</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+    <main class="app">
+        <section class="panel">
+            <h2>Include</h2>
+            <div class="check-grid">
+                <label class="check">
+                    <input id="includePaths" type="checkbox" checked>
+                    <span>Paths</span>
+                </label>
+                <label class="check">
+                    <input id="includeCompound" type="checkbox" checked>
+                    <span>Compound paths</span>
+                </label>
+                <label class="check">
+                    <input id="includeText" type="checkbox" checked>
+                    <span>Text frames</span>
+                </label>
+                <label class="check">
+                    <input id="includeRaster" type="checkbox">
+                    <span>Raster images</span>
+                </label>
+                <label class="check">
+                    <input id="includeMesh" type="checkbox">
+                    <span>Mesh items</span>
+                </label>
+                <label class="check">
+                    <input id="includePlaced" type="checkbox">
+                    <span>Placed / Linked</span>
+                </label>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Skip</h2>
+            <div class="check-grid">
+                <label class="check">
+                    <input id="skipClipping" type="checkbox" checked>
+                    <span>Clipping paths</span>
+                </label>
+                <label class="check">
+                    <input id="skipHidden" type="checkbox" checked>
+                    <span>Hidden items</span>
+                </label>
+                <label class="check">
+                    <input id="skipLocked" type="checkbox" checked>
+                    <span>Locked items</span>
+                </label>
+            </div>
+        </section>
+
+        <section class="panel">
+            <button id="selectLeavesBtn" class="primary action-btn" type="button">SELECT LEAVES</button>
+            <p class="sub">Replaces the current selection with paintable leaf items found inside the selected groups, compound shapes, and other containers.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">Pre-select containers (groups, compound shapes), then click SELECT LEAVES to drill in.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
