@@ -1,13 +1,11 @@
 (function () {
     var STORAGE_KEY = "obend.panel.settings.v1";
-    var PREVIEW_DEBOUNCE_MS = 90;
 
     var state = {
         busy: false,
         previewActive: false,
         previewPending: null,
-        previewQueuedConfig: null,
-        previewTimer: null
+        previewQueued: false
     };
 
     var fields = {
@@ -284,17 +282,11 @@
         }
     }
 
-    function stopPreviewTimer() {
-        if (state.previewTimer) {
-            clearTimeout(state.previewTimer);
-            state.previewTimer = null;
-        }
-    }
-
     function sendPreviewUpdate() {
         if (!state.previewActive) return Promise.resolve(null);
         if (state.previewPending) {
-            state.previewQueuedConfig = collectConfig();
+            // In-flight: mark that we want another roundtrip with the latest config when this one finishes.
+            state.previewQueued = true;
             return state.previewPending;
         }
         var config = collectConfig();
@@ -307,7 +299,6 @@
                         fields.livePreview.checked = false;
                         updatePreviewControls();
                     }
-                    return response;
                 }
                 return response;
             })
@@ -316,22 +307,18 @@
             })
             .finally(function () {
                 state.previewPending = null;
-                var queued = state.previewQueuedConfig;
-                state.previewQueuedConfig = null;
-                if (queued && state.previewActive) {
-                    schedulePreviewUpdate();
+                if (state.previewQueued && state.previewActive) {
+                    state.previewQueued = false;
+                    sendPreviewUpdate();
                 }
             });
         return state.previewPending;
     }
 
     function schedulePreviewUpdate() {
+        // No artificial delay: fire immediately, queue if a request is already in flight.
         if (!state.previewActive) return;
-        stopPreviewTimer();
-        state.previewTimer = setTimeout(function () {
-            state.previewTimer = null;
-            sendPreviewUpdate();
-        }, PREVIEW_DEBOUNCE_MS);
+        sendPreviewUpdate();
     }
 
     async function startLivePreview() {
@@ -357,8 +344,7 @@
 
     async function cancelLivePreview() {
         if (state.busy) return;
-        stopPreviewTimer();
-        state.previewQueuedConfig = null;
+        state.previewQueued = false;
         if (state.previewPending) {
             try { await state.previewPending; } catch (e) {}
         }
@@ -379,12 +365,15 @@
 
     async function applyLivePreview() {
         if (state.busy) return;
-        stopPreviewTimer();
         if (state.previewPending) {
             try { await state.previewPending; } catch (e) {}
         }
-        if (state.previewQueuedConfig && state.previewActive) {
+        if (state.previewQueued && state.previewActive) {
+            state.previewQueued = false;
             await sendPreviewUpdate();
+            if (state.previewPending) {
+                try { await state.previewPending; } catch (e) {}
+            }
         }
         setBusy(true);
         setStatus("info", "Applying preview...");
@@ -405,11 +394,14 @@
         try {
             var handshake = await callHost("obendHandshake");
             if (!handshake.ok) throw new Error(handshake.message || "Could not connect to Illustrator.");
+            // If a stale session is still live in the host (panel reload while preview was on),
+            // silently cancel it so the panel always starts in a clean state.
             if (handshake.previewActive) {
-                state.previewActive = true;
-                fields.livePreview.checked = true;
-                updatePreviewControls();
+                try { await callHost("obendCancelPreview"); } catch (e) {}
             }
+            state.previewActive = false;
+            fields.livePreview.checked = false;
+            updatePreviewControls();
             setStatus("success", handshake.message + " " + handshake.hostName + " " + handshake.hostVersion);
         } catch (error) {
             setStatus("error", error.message);

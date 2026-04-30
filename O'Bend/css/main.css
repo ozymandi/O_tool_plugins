@@ -313,14 +313,16 @@ input:focus-visible, button:focus-visible {
 
 .seg-row {
     display: grid;
-    grid-template-columns: repeat(var(--seg-cols, 3), 1fr);
+    grid-template-columns: repeat(3, 1fr);
     overflow: hidden;
     border: 1px solid var(--line);
     border-radius: var(--radius-control);
     background: var(--panel-2);
 }
 
-.seg-row:has(.seg:nth-child(2):last-child) { --seg-cols: 2; }
+.seg-row.seg-row--2 {
+    grid-template-columns: repeat(2, 1fr);
+}
 
 .seg {
     min-height: 26px;

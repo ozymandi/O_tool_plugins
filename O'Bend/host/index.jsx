@@ -335,10 +335,19 @@ function obendComputeLocalBounds(dataArray, ctx, acc) {
     }
 }
 
-function obendApplyToPathItem(pathItem, pathData, ctx) {
+function obendGetCachedSubPts(pathData, subLevel) {
+    if (pathData._cacheLevel === subLevel && pathData._cacheSubPts) {
+        return pathData._cacheSubPts;
+    }
     var clonedPts = obendClonePts(pathData.points);
     clonedPts = obendNormalizeHandles(clonedPts, pathData.isClosed);
-    var subPts = obendMathSubdivide(clonedPts, pathData.isClosed, ctx.subLevel);
+    pathData._cacheSubPts = obendMathSubdivide(clonedPts, pathData.isClosed, subLevel);
+    pathData._cacheLevel = subLevel;
+    return pathData._cacheSubPts;
+}
+
+function obendApplyToPathItem(pathItem, pathData, ctx) {
+    var subPts = obendGetCachedSubPts(pathData, ctx.subLevel);
 
     var finalPts = [];
     for (var j = 0; j < subPts.length; j++) {
