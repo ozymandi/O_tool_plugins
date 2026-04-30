@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Trim</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+    <main class="app">
+        <section class="panel">
+            <h2>Mode</h2>
+            <div class="mode-segmented" role="group" aria-label="Trim mode">
+                <button class="mode-seg" type="button" data-mode="col" title="Columns">COLS</button>
+                <button class="mode-seg" type="button" data-mode="row" title="Rows">ROWS</button>
+                <button class="mode-seg" type="button" data-mode="grid" title="Grid">GRID</button>
+            </div>
+            <input id="mode" type="hidden" value="col">
+        </section>
+
+        <section class="panel">
+            <h2>Grid</h2>
+            <div class="row-two">
+                <label class="field">
+                    <span class="field-label">X (Cols)</span>
+                    <input id="cols" type="number" min="1" step="1" value="5">
+                </label>
+                <label class="field">
+                    <span class="field-label">Y (Rows)</span>
+                    <input id="rows" type="number" min="1" step="1" value="1">
+                </label>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Transform</h2>
+
+            <label class="field">
+                <span class="field-label">Scale (%)</span>
+                <div class="slider-capsule">
+                    <input id="scale" type="number" min="1" max="500" step="1" value="80">
+                    <div class="slider-track-area">
+                        <input id="scaleRange" type="range" min="1" max="200" step="1" value="80">
+                    </div>
+                    <button id="scaleResetBtn" class="slider-reset-btn" type="button" title="Reset to 100%" aria-label="Reset to 100%">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+
+            <label class="check">
+                <input id="proportional" type="checkbox" checked>
+                <span>Proportional scale (lock aspect)</span>
+            </label>
+
+            <div class="row-two">
+                <label class="field">
+                    <span class="field-label">Gap (px)</span>
+                    <input id="gap" type="number" step="1" value="0">
+                </label>
+                <label class="field">
+                    <span class="field-label">Anchor</span>
+                    <div class="simple-dropdown custom-select-wrapper" data-id="anchor">
+                        <input id="anchor" type="hidden" value="center">
+                        <div class="custom-select ui-dropdown-toggle" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                            <span class="ui-dropdown-label">Center</span>
+                            <span class="dropdown-chevron" aria-hidden="true">
+                                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4.5 6.5L8 10L11.5 6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="custom-options ui-dropdown-list" role="listbox" aria-label="Anchor">
+                            <div class="custom-option" data-value="center" role="option" aria-selected="true">Center</div>
+                            <div class="custom-option" data-value="top-left" role="option" aria-selected="false">Top-Left</div>
+                            <div class="custom-option" data-value="top-right" role="option" aria-selected="false">Top-Right</div>
+                            <div class="custom-option" data-value="bottom-left" role="option" aria-selected="false">Bottom-Left</div>
+                            <div class="custom-option" data-value="bottom-right" role="option" aria-selected="false">Bottom-Right</div>
+                        </div>
+                    </div>
+                </label>
+            </div>
+        </section>
+
+        <section class="panel">
+            <button id="trimBtn" class="primary action-btn" type="button">TRIM</button>
+            <p class="sub">Splits the selected object into a grid using clipping masks. Each cell scales by Scale^distance from the anchor; cells stack with the chosen Gap. Source object is consumed.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">COLS keeps Y=1, ROWS keeps X=1, GRID enables both axes.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>

@@ -31,7 +31,7 @@ PluginName/
 
 - [x] O'Deselect
 - [x] O'Select
-- [ ] O'Trim
+- [x] O'Trim
 - [ ] O'Split
 - [ ] O'Connect
 - [ ] O'Align
