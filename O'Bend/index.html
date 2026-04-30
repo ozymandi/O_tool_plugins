@@ -156,11 +156,16 @@
         </section>
 
         <section class="panel">
+            <label class="check">
+                <input id="livePreview" type="checkbox">
+                <span>Live Preview</span>
+            </label>
             <div class="action-row">
                 <button id="applyBtn" class="primary action-btn" type="button">APPLY</button>
-                <button id="resetBtn" class="action-btn" type="button">RESET</button>
+                <button id="cancelBtn" class="action-btn" type="button" disabled>CANCEL</button>
             </div>
-            <p class="sub">APPLY replaces the selection with the bent result. Use Ctrl+Z to undo. RESET sets all parameters back to defaults.</p>
+            <button id="resetBtn" class="action-btn" type="button">RESET PARAMETERS</button>
+            <p class="sub">Live Preview captures the current selection and updates as you change parameters. APPLY commits the preview, CANCEL reverts. Without Live Preview, APPLY runs once on the current selection (Ctrl+Z to undo).</p>
         </section>
 
         <section class="panel">

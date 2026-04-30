@@ -4,6 +4,15 @@
 var OBEND_DEBUG = false;
 var debugLogFile = new File(Folder.desktop + "/obend_cep_log.txt");
 
+var obendSession = {
+    active: false,
+    originals: [],
+    previews: [],
+    dataTree: [],
+    gCx: 0,
+    gCy: 0
+};
+
 function obendLog(message) {
     if (!OBEND_DEBUG) return;
     try {
@@ -113,7 +122,8 @@ function obendGetGlobalBounds(items, acc) {
     }
 }
 
-function obendBackup(items, dataArr) {
+function obendBackupAndPreview(items, dataArr, previewArr, parent) {
+    var doc = app.activeDocument;
     for (var i = 0; i < items.length; i++) {
         var item = items[i];
         if (item.typename === "PathItem") {
@@ -127,27 +137,39 @@ function obendBackup(items, dataArr) {
                     r: [pt.rightDirection[0], pt.rightDirection[1]]
                 });
             }
-            dataArr.push({ type: "path", isClosed: item.closed, points: pathData, ref: item });
+            dataArr.push({ type: "path", isClosed: item.closed, points: pathData });
+
+            var dup = item.duplicate(parent || doc, ElementPlacement.PLACEATEND);
+            dup.hidden = false;
+            previewArr.push(dup);
         } else if (item.typename === "GroupItem") {
             var grpData = [];
-            dataArr.push({ type: "group", items: grpData, ref: item });
-            obendBackup(item.pageItems, grpData);
+            dataArr.push({ type: "group", items: grpData });
+            var dupGrp = item.duplicate(parent || doc, ElementPlacement.PLACEATEND);
+            dupGrp.hidden = false;
+            previewArr.push(dupGrp);
+            while (dupGrp.pageItems.length > 0) dupGrp.pageItems[0].remove();
+            obendBackupAndPreview(item.pageItems, grpData, previewArr, dupGrp);
         } else if (item.typename === "CompoundPathItem") {
             var compData = [];
-            dataArr.push({ type: "compound", items: compData, ref: item });
-            for (var j = 0; j < item.pathItems.length; j++) {
-                var cPath = item.pathItems[j];
+            dataArr.push({ type: "compound", items: compData });
+            var dupComp = item.duplicate(parent || doc, ElementPlacement.PLACEATEND);
+            dupComp.hidden = false;
+            previewArr.push(dupComp);
+
+            for (var k = 0; k < item.pathItems.length; k++) {
+                var cPath = item.pathItems[k];
                 var ppts = cPath.pathPoints;
                 var ppdata = [];
-                for (var k = 0; k < ppts.length; k++) {
-                    var pp = ppts[k];
+                for (var m = 0; m < ppts.length; m++) {
+                    var pp = ppts[m];
                     ppdata.push({
                         a: [pp.anchor[0], pp.anchor[1]],
                         l: [pp.leftDirection[0], pp.leftDirection[1]],
                         r: [pp.rightDirection[0], pp.rightDirection[1]]
                     });
                 }
-                compData.push({ type: "path", isClosed: cPath.closed, points: ppdata, ref: cPath });
+                compData.push({ type: "path", isClosed: cPath.closed, points: ppdata });
             }
         }
     }
@@ -340,19 +362,109 @@ function obendApplyToPathItem(pathItem, pathData, ctx) {
     }
 }
 
-function obendApplyToData(dataArray, ctx) {
-    for (var i = 0; i < dataArray.length; i++) {
-        var d = dataArray[i];
+function obendProcessSession(previews, idxObj, dataArr, ctx) {
+    for (var i = 0; i < dataArr.length; i++) {
+        var d = dataArr[i];
         if (d.type === "path") {
-            obendApplyToPathItem(d.ref, d, ctx);
+            obendApplyToPathItem(previews[idxObj.value], d, ctx);
+            idxObj.value++;
         } else if (d.type === "group") {
-            obendApplyToData(d.items, ctx);
+            idxObj.value++;
+            obendProcessSession(previews, idxObj, d.items, ctx);
         } else if (d.type === "compound") {
+            var compItem = previews[idxObj.value];
+            idxObj.value++;
             for (var c = 0; c < d.items.length; c++) {
-                obendApplyToPathItem(d.items[c].ref, d.items[c], ctx);
+                obendApplyToPathItem(compItem.pathItems[c], d.items[c], ctx);
             }
         }
     }
+}
+
+function obendBuildContext(config, gCx, gCy) {
+    var rotAng = 0;
+    if (config.axis === "vertical") rotAng = 90;
+    else if (config.axis === "custom") rotAng = config.customAngle;
+    var dirMult = config.direction === "normal" ? 1 : -1;
+    return {
+        subLevel: config.subdivisions,
+        rotAngleDeg: rotAng,
+        bendAngleDeg: config.bendAngle * dirMult,
+        limitPct: config.limit,
+        centerPct: config.center,
+        offset: config.offset,
+        spiralR: config.radialExpand * dirMult,
+        spiralZ: config.axisShift * dirMult,
+        gCx: gCx,
+        gCy: gCy,
+        lMinX: 0,
+        lWidth: 1
+    };
+}
+
+function obendApplyConfigToSession(session, config) {
+    var ctx = obendBuildContext(config, session.gCx, session.gCy);
+    var localBounds = { minX: Infinity, maxX: -Infinity };
+    obendComputeLocalBounds(session.dataTree, ctx, localBounds);
+    ctx.lMinX = localBounds.minX;
+    ctx.lWidth = localBounds.maxX - localBounds.minX;
+    if (!isFinite(ctx.lWidth) || ctx.lWidth === 0) ctx.lWidth = 1;
+
+    var idxObj = { value: 0 };
+    obendProcessSession(session.previews, idxObj, session.dataTree, ctx);
+}
+
+function obendBuildSession(sel) {
+    var bounds = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
+    obendGetGlobalBounds(sel, bounds);
+    if (!isFinite(bounds.minX)) {
+        throw new Error("Selection has no path geometry.");
+    }
+    var gCx = bounds.minX + (bounds.maxX - bounds.minX) / 2;
+    var gCy = bounds.minY + (bounds.maxY - bounds.minY) / 2;
+
+    var originals = [];
+    for (var i = 0; i < sel.length; i++) originals.push(sel[i]);
+
+    var dataArr = [];
+    var previews = [];
+    obendBackupAndPreview(sel, dataArr, previews, null);
+
+    for (var j = 0; j < originals.length; j++) {
+        try { originals[j].hidden = true; } catch (e) {}
+    }
+
+    return {
+        originals: originals,
+        previews: previews,
+        dataTree: dataArr,
+        gCx: gCx,
+        gCy: gCy
+    };
+}
+
+function obendCommitSession(session) {
+    for (var i = 0; i < session.originals.length; i++) {
+        try { session.originals[i].remove(); } catch (e) {}
+    }
+}
+
+function obendCancelSessionRevert(session) {
+    for (var i = 0; i < session.previews.length; i++) {
+        try { session.previews[i].remove(); } catch (e) {}
+    }
+    for (var j = 0; j < session.originals.length; j++) {
+        try { session.originals[j].hidden = false; } catch (e) {}
+    }
+}
+
+function obendClearSession() {
+    obendSession.active = false;
+    obendSession.originals = [];
+    obendSession.previews = [];
+    obendSession.dataTree = [];
+    obendSession.gCx = 0;
+    obendSession.gCy = 0;
 }
 
 function obendCountPaths(dataArray) {
@@ -368,6 +480,11 @@ function obendCountPaths(dataArray) {
 
 function obendRun(encodedConfig) {
     try {
+        if (obendSession.active) {
+            obendCancelSessionRevert(obendSession);
+            obendClearSession();
+        }
+
         var config = obendValidateConfig(obendParseConfig(encodedConfig));
         var doc = obendEnsureDocument();
         var sel = doc.selection;
@@ -375,51 +492,102 @@ function obendRun(encodedConfig) {
             throw new Error("Select an object to bend first.");
         }
 
-        var bounds = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
-        obendGetGlobalBounds(sel, bounds);
-        if (!isFinite(bounds.minX)) {
-            throw new Error("Selection has no path geometry.");
-        }
-        var gCx = bounds.minX + (bounds.maxX - bounds.minX) / 2;
-        var gCy = bounds.minY + (bounds.maxY - bounds.minY) / 2;
-
-        var data = [];
-        obendBackup(sel, data);
-
-        var rotAng = 0;
-        if (config.axis === "vertical") rotAng = 90;
-        else if (config.axis === "custom") rotAng = config.customAngle;
-
-        var dirMult = config.direction === "normal" ? 1 : -1;
-
-        var ctx = {
-            subLevel: config.subdivisions,
-            rotAngleDeg: rotAng,
-            bendAngleDeg: config.bendAngle * dirMult,
-            limitPct: config.limit,
-            centerPct: config.center,
-            offset: config.offset,
-            spiralR: config.radialExpand * dirMult,
-            spiralZ: config.axisShift * dirMult,
-            gCx: gCx,
-            gCy: gCy,
-            lMinX: 0,
-            lWidth: 1
-        };
-
-        var localBounds = { minX: Infinity, maxX: -Infinity };
-        obendComputeLocalBounds(data, ctx, localBounds);
-        ctx.lMinX = localBounds.minX;
-        ctx.lWidth = localBounds.maxX - localBounds.minX;
-        if (!isFinite(ctx.lWidth) || ctx.lWidth === 0) ctx.lWidth = 1;
-
-        obendApplyToData(data, ctx);
+        var session = obendBuildSession(sel);
+        obendApplyConfigToSession(session, config);
+        obendCommitSession(session);
         app.redraw();
 
-        var pathCount = obendCountPaths(data);
-        return obendResponse(true, "Bent " + pathCount + " path(s).", { paths: pathCount });
+        var paths = obendCountPaths(session.dataTree);
+        return obendResponse(true, "Bent " + paths + " path(s).", { paths: paths });
     } catch (error) {
         obendLog(error.message || String(error));
+        return obendResponse(false, error.message || String(error));
+    }
+}
+
+function obendStartPreview(encodedConfig) {
+    try {
+        if (obendSession.active) {
+            obendCancelSessionRevert(obendSession);
+            obendClearSession();
+        }
+
+        var config = obendValidateConfig(obendParseConfig(encodedConfig));
+        var doc = obendEnsureDocument();
+        var sel = doc.selection;
+        if (!sel || sel.length === 0) {
+            throw new Error("Select an object first.");
+        }
+
+        var session = obendBuildSession(sel);
+        obendApplyConfigToSession(session, config);
+        app.redraw();
+
+        obendSession.active = true;
+        obendSession.originals = session.originals;
+        obendSession.previews = session.previews;
+        obendSession.dataTree = session.dataTree;
+        obendSession.gCx = session.gCx;
+        obendSession.gCy = session.gCy;
+
+        var paths = obendCountPaths(session.dataTree);
+        return obendResponse(true, "Preview started: " + paths + " path(s).", { paths: paths });
+    } catch (error) {
+        obendLog(error.message || String(error));
+        return obendResponse(false, error.message || String(error));
+    }
+}
+
+function obendUpdatePreview(encodedConfig) {
+    try {
+        if (!obendSession.active) {
+            return obendResponse(false, "No active preview session.");
+        }
+        var config = obendValidateConfig(obendParseConfig(encodedConfig));
+        obendApplyConfigToSession(obendSession, config);
+        app.redraw();
+        return obendResponse(true, "Preview updated.");
+    } catch (error) {
+        obendLog(error.message || String(error));
+        return obendResponse(false, error.message || String(error));
+    }
+}
+
+function obendApplyPreview() {
+    try {
+        if (!obendSession.active) {
+            return obendResponse(false, "No active preview session.");
+        }
+        var paths = obendCountPaths(obendSession.dataTree);
+        obendCommitSession(obendSession);
+        obendClearSession();
+        app.redraw();
+        return obendResponse(true, "Bend applied: " + paths + " path(s).", { paths: paths });
+    } catch (error) {
+        obendLog(error.message || String(error));
+        return obendResponse(false, error.message || String(error));
+    }
+}
+
+function obendCancelPreview() {
+    try {
+        if (!obendSession.active) {
+            return obendResponse(true, "No active preview to cancel.", { wasActive: false });
+        }
+        obendCancelSessionRevert(obendSession);
+        obendClearSession();
+        app.redraw();
+        return obendResponse(true, "Preview cancelled.", { wasActive: true });
+    } catch (error) {
+        obendLog(error.message || String(error));
+        return obendResponse(false, error.message || String(error));
+    }
+}
+
+function obendIsPreviewActive() {
+    try {
+        return obendResponse(true, "", { active: !!obendSession.active });
+    } catch (error) {
         return obendResponse(false, error.message || String(error));
     }
 }
@@ -428,7 +596,8 @@ function obendHandshake() {
     try {
         return obendResponse(true, "Panel connected.", {
             hostName: app.name,
-            hostVersion: app.version
+            hostVersion: app.version,
+            previewActive: !!obendSession.active
         });
     } catch (error) {
         return obendResponse(false, error.message || String(error));

@@ -1,6 +1,14 @@
 (function () {
     var STORAGE_KEY = "obend.panel.settings.v1";
-    var state = { busy: false };
+    var PREVIEW_DEBOUNCE_MS = 90;
+
+    var state = {
+        busy: false,
+        previewActive: false,
+        previewPending: null,
+        previewQueuedConfig: null,
+        previewTimer: null
+    };
 
     var fields = {
         axis: document.getElementById("axis"),
@@ -20,11 +28,13 @@
         radialExpand: document.getElementById("radialExpand"),
         radialExpandRange: document.getElementById("radialExpandRange"),
         axisShift: document.getElementById("axisShift"),
-        axisShiftRange: document.getElementById("axisShiftRange")
+        axisShiftRange: document.getElementById("axisShiftRange"),
+        livePreview: document.getElementById("livePreview")
     };
 
     var buttons = {
         apply: document.getElementById("applyBtn"),
+        cancel: document.getElementById("cancelBtn"),
         reset: document.getElementById("resetBtn")
     };
 
@@ -80,6 +90,9 @@
         Object.keys(buttons).forEach(function (key) {
             if (buttons[key]) buttons[key].disabled = isBusy;
         });
+        if (!isBusy) {
+            buttons.cancel.disabled = !state.previewActive;
+        }
         state.busy = isBusy;
     }
 
@@ -87,6 +100,11 @@
         statusEl.textContent = message;
         statusEl.title = message;
         statusDotEl.className = "status-indicator status-indicator--" + kind;
+    }
+
+    function updatePreviewControls() {
+        buttons.cancel.disabled = !state.previewActive || state.busy;
+        buttons.apply.textContent = state.previewActive ? "APPLY PREVIEW" : "APPLY";
     }
 
     function getCepApi() {
@@ -237,13 +255,23 @@
         return config;
     }
 
+    function callHost(hostFunction, config) {
+        var script;
+        if (config !== undefined && config !== null) {
+            var payload = escapeForEval(JSON.stringify(config));
+            script = hostFunction + "('" + payload + "')";
+        } else {
+            script = hostFunction + "()";
+        }
+        return evalHost(script).then(parseHostResponse);
+    }
+
     async function runHostAction(label, hostFunction, config) {
         saveSettings();
         setBusy(true);
         setStatus("info", label + "...");
         try {
-            var payload = escapeForEval(JSON.stringify(config));
-            var response = parseHostResponse(await evalHost(hostFunction + "('" + payload + "')"));
+            var response = await callHost(hostFunction, config);
             if (!response.ok) throw new Error(response.message || "Illustrator returned an error.");
             setStatus("success", response.message || (label + " complete."));
             return response;
@@ -252,13 +280,136 @@
             return null;
         } finally {
             setBusy(false);
+            updatePreviewControls();
+        }
+    }
+
+    function stopPreviewTimer() {
+        if (state.previewTimer) {
+            clearTimeout(state.previewTimer);
+            state.previewTimer = null;
+        }
+    }
+
+    function sendPreviewUpdate() {
+        if (!state.previewActive) return Promise.resolve(null);
+        if (state.previewPending) {
+            state.previewQueuedConfig = collectConfig();
+            return state.previewPending;
+        }
+        var config = collectConfig();
+        state.previewPending = callHost("obendUpdatePreview", config)
+            .then(function (response) {
+                if (!response.ok) {
+                    setStatus("error", response.message || "Preview update failed.");
+                    if (response.message && response.message.indexOf("No active") !== -1) {
+                        state.previewActive = false;
+                        fields.livePreview.checked = false;
+                        updatePreviewControls();
+                    }
+                    return response;
+                }
+                return response;
+            })
+            .catch(function (error) {
+                setStatus("error", error.message);
+            })
+            .finally(function () {
+                state.previewPending = null;
+                var queued = state.previewQueuedConfig;
+                state.previewQueuedConfig = null;
+                if (queued && state.previewActive) {
+                    schedulePreviewUpdate();
+                }
+            });
+        return state.previewPending;
+    }
+
+    function schedulePreviewUpdate() {
+        if (!state.previewActive) return;
+        stopPreviewTimer();
+        state.previewTimer = setTimeout(function () {
+            state.previewTimer = null;
+            sendPreviewUpdate();
+        }, PREVIEW_DEBOUNCE_MS);
+    }
+
+    async function startLivePreview() {
+        if (state.busy) return false;
+        var config = collectConfig();
+        saveSettings();
+        setBusy(true);
+        setStatus("info", "Starting preview...");
+        try {
+            var response = await callHost("obendStartPreview", config);
+            if (!response.ok) throw new Error(response.message || "Could not start preview.");
+            state.previewActive = true;
+            setStatus("success", response.message || "Preview started.");
+            return true;
+        } catch (error) {
+            setStatus("error", error.message);
+            return false;
+        } finally {
+            setBusy(false);
+            updatePreviewControls();
+        }
+    }
+
+    async function cancelLivePreview() {
+        if (state.busy) return;
+        stopPreviewTimer();
+        state.previewQueuedConfig = null;
+        if (state.previewPending) {
+            try { await state.previewPending; } catch (e) {}
+        }
+        setBusy(true);
+        setStatus("info", "Cancelling preview...");
+        try {
+            var response = await callHost("obendCancelPreview");
+            if (!response.ok) throw new Error(response.message || "Cancel failed.");
+            state.previewActive = false;
+            setStatus("info", response.message || "Preview cancelled.");
+        } catch (error) {
+            setStatus("error", error.message);
+        } finally {
+            setBusy(false);
+            updatePreviewControls();
+        }
+    }
+
+    async function applyLivePreview() {
+        if (state.busy) return;
+        stopPreviewTimer();
+        if (state.previewPending) {
+            try { await state.previewPending; } catch (e) {}
+        }
+        if (state.previewQueuedConfig && state.previewActive) {
+            await sendPreviewUpdate();
+        }
+        setBusy(true);
+        setStatus("info", "Applying preview...");
+        try {
+            var response = await callHost("obendApplyPreview");
+            if (!response.ok) throw new Error(response.message || "Apply failed.");
+            state.previewActive = false;
+            setStatus("success", response.message || "Bend applied.");
+        } catch (error) {
+            setStatus("error", error.message);
+        } finally {
+            setBusy(false);
+            updatePreviewControls();
         }
     }
 
     async function initializePanel() {
         try {
-            var handshake = parseHostResponse(await evalHost("obendHandshake()"));
+            var handshake = await callHost("obendHandshake");
             if (!handshake.ok) throw new Error(handshake.message || "Could not connect to Illustrator.");
+            if (handshake.previewActive) {
+                state.previewActive = true;
+                fields.livePreview.checked = true;
+                updatePreviewControls();
+            }
             setStatus("success", handshake.message + " " + handshake.hostName + " " + handshake.hostVersion);
         } catch (error) {
             setStatus("error", error.message);
@@ -356,19 +507,26 @@
         window.addEventListener("blur", finishScrub);
     }
 
+    function onParameterChanged() {
+        saveSettings();
+        if (state.previewActive) {
+            schedulePreviewUpdate();
+        }
+    }
+
     function bindSliderPair(numKey, rangeKey) {
         var numField = fields[numKey];
         var rangeField = fields[rangeKey];
         if (rangeField) {
             rangeField.addEventListener("input", function () {
                 syncPair(numKey, rangeKey, rangeField.value);
-                saveSettings();
+                onParameterChanged();
             });
         }
         if (numField) {
             numField.addEventListener("input", function () {
                 syncPair(numKey, rangeKey, numField.value);
-                saveSettings();
+                onParameterChanged();
             });
         }
     }
@@ -378,7 +536,7 @@
             button.addEventListener("click", function () {
                 fields[fieldKey].value = button.getAttribute("data-" + name);
                 updateFn();
-                saveSettings();
+                onParameterChanged();
             });
         });
     }
@@ -390,7 +548,7 @@
             btn.addEventListener("click", function () {
                 var rangeKey = key + "Range";
                 syncPair(key, rangeKey, DEFAULTS[key]);
-                saveSettings();
+                onParameterChanged();
             });
         });
     }
@@ -400,18 +558,41 @@
     bindSegRow("direction", "direction", updateDirectionButtons);
     bindResetButtons();
 
-    buttons.apply.addEventListener("click", function () {
-        runHostAction("Bending selection", "obendRun", collectConfig());
+    fields.livePreview.addEventListener("change", async function () {
+        if (fields.livePreview.checked) {
+            var ok = await startLivePreview();
+            if (!ok) {
+                fields.livePreview.checked = false;
+            }
+        } else {
+            await cancelLivePreview();
+        }
+    });
+
+    buttons.apply.addEventListener("click", async function () {
+        if (state.previewActive) {
+            await applyLivePreview();
+            fields.livePreview.checked = false;
+        } else {
+            await runHostAction("Bending selection", "obendRun", collectConfig());
+        }
+    });
+
+    buttons.cancel.addEventListener("click", async function () {
+        await cancelLivePreview();
+        fields.livePreview.checked = false;
     });
 
     buttons.reset.addEventListener("click", function () {
         applySnapshot(getDefaultConfig());
         saveSettings();
         setStatus("info", "Parameters reset to defaults.");
+        if (state.previewActive) schedulePreviewUpdate();
     });
 
     restoreSettings();
     bindNumberWheel();
     bindNumericScrubbers();
+    updatePreviewControls();
     initializePanel();
 })();
