@@ -224,6 +224,7 @@ input:focus-visible, button:focus-visible {
     right: 1px;
     bottom: 1px;
     width: 14px;
+    min-height: 0;
     box-sizing: border-box;
     border: 0;
     border-left: 1px solid rgba(255, 255, 255, 0.08);
