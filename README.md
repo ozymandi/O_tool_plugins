@@ -43,7 +43,7 @@ PluginName/
 - [x] O'Cone
 - [x] O'Spiral
 - [x] O'Line
-- [ ] O'GridScale
+- [x] O'GridScale
 - [ ] O'Linearray
 - [ ] O'Autoshape
 - [ ] O'Math

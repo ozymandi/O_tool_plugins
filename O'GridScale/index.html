@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'GridScale</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+    <main class="app">
+        <section class="panel">
+            <h2>Mode</h2>
+            <div class="mode-segmented" role="group" aria-label="Work mode">
+                <button class="mode-seg" type="button" data-mode="radial" title="Radial (Center to edges)">RADIAL</button>
+                <button class="mode-seg" type="button" data-mode="horizontal" title="Linear (Left to right)">HORZ</button>
+                <button class="mode-seg" type="button" data-mode="vertical" title="Linear (Top to bottom)">VERT</button>
+            </div>
+            <input id="mode" type="hidden" value="radial">
+        </section>
+
+        <section class="panel">
+            <h2>Scale (%)</h2>
+            <label class="field">
+                <span class="field-label" id="startLabel">Start (center)</span>
+                <div class="slider-capsule">
+                    <input id="startScale" type="number" min="0" max="500" step="1" value="85">
+                    <div class="slider-track-area">
+                        <input id="startScaleRange" type="range" min="0" max="200" step="1" value="85">
+                    </div>
+                    <button id="startScaleResetBtn" class="slider-reset-btn" type="button" title="Reset to 85" aria-label="Reset to 85">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label" id="endLabel">End (edges)</span>
+                <div class="slider-capsule">
+                    <input id="endScale" type="number" min="0" max="500" step="1" value="15">
+                    <div class="slider-track-area">
+                        <input id="endScaleRange" type="range" min="0" max="200" step="1" value="15">
+                    </div>
+                    <button id="endScaleResetBtn" class="slider-reset-btn" type="button" title="Reset to 15" aria-label="Reset to 15">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+        </section>
+
+        <section class="panel">
+            <h2>Easing</h2>
+            <div class="mode-segmented" role="group" aria-label="Easing" data-cols="2">
+                <button class="mode-seg" type="button" data-easing="cosine" title="Smooth (Cosine)">SMOOTH</button>
+                <button class="mode-seg" type="button" data-easing="linear" title="Sharp (Linear)">LINEAR</button>
+            </div>
+            <input id="easing" type="hidden" value="cosine">
+        </section>
+
+        <section class="panel">
+            <h2>Options</h2>
+            <label class="check">
+                <input id="scaleStrokes" type="checkbox" checked>
+                <span>Scale strokes</span>
+            </label>
+            <label class="check">
+                <input id="invert" type="checkbox">
+                <span>Invert progress</span>
+            </label>
+        </section>
+
+        <section class="panel">
+            <button id="applyBtn" class="primary action-btn" type="button">APPLY</button>
+            <p class="sub">Select 2+ objects (or a single group). Each item is scaled around its own center based on its position in the grid: closer to the start gets the Start %, closer to the end gets the End %.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">Origin lock: each object stays centered on its original position after scaling.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
