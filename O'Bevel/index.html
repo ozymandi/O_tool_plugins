@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Bevel</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+    <main class="app">
+        <section class="panel">
+            <h2>Mode</h2>
+            <div class="seg-row seg-row--2" role="group" aria-label="Mode">
+                <button class="seg" type="button" data-mode="steps">STEPS</button>
+                <button class="seg" type="button" data-mode="custom">CUSTOM</button>
+            </div>
+            <input id="mode" type="hidden" value="steps">
+        </section>
+
+        <section class="panel" data-show-when="mode-steps">
+            <h2>Steps</h2>
+            <label class="field">
+                <span class="field-label">Count</span>
+                <div class="slider-capsule">
+                    <input id="count" type="number" min="1" max="50" step="1" value="3">
+                    <div class="slider-track-area">
+                        <input id="countRange" type="range" min="1" max="20" step="1" value="3">
+                    </div>
+                    <button id="countResetBtn" class="slider-reset-btn" type="button" title="Reset to 3">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <p class="sub">Number of stair-step segments to insert at each corner.</p>
+        </section>
+
+        <section class="panel" data-show-when="mode-custom">
+            <h2>Custom Profile</h2>
+            <button id="loadClipboardBtn" class="action-btn" type="button">LOAD CLIPBOARD</button>
+            <p id="profileStatus" class="sub">Profile: empty.</p>
+            <div class="check-row">
+                <label class="check">
+                    <input id="flip" type="checkbox">
+                    <span>Flip vertical</span>
+                </label>
+                <label class="check">
+                    <input id="straighten" type="checkbox" checked>
+                    <span>Straight sides</span>
+                </label>
+            </div>
+            <p class="sub">Copy a path (Ctrl+C) in Illustrator, then click LOAD CLIPBOARD. The path geometry becomes the bevel profile.</p>
+        </section>
+
+        <section class="panel">
+            <h2>Radius</h2>
+            <label class="field">
+                <span class="field-label">Radius (px)</span>
+                <div class="slider-capsule">
+                    <input id="radius" type="number" min="1" max="5000" step="1" value="20">
+                    <div class="slider-track-area">
+                        <input id="radiusRange" type="range" min="1" max="500" step="1" value="20">
+                    </div>
+                    <button id="radiusResetBtn" class="slider-reset-btn" type="button" title="Reset to 20">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <p class="sub">Corner radius. Each corner clamps to half the shorter neighbouring edge.</p>
+        </section>
+
+        <section class="panel">
+            <label class="check">
+                <input id="livePreview" type="checkbox">
+                <span>Live Preview</span>
+            </label>
+            <div class="action-row">
+                <button id="applyBtn" class="primary action-btn" type="button">APPLY</button>
+                <button id="cancelBtn" class="action-btn" type="button" disabled>CANCEL</button>
+            </div>
+            <button id="resetBtn" class="action-btn" type="button">RESET PARAMETERS</button>
+            <p class="sub">Live Preview captures the current selection and updates as parameters change. APPLY commits the preview, CANCEL reverts.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">Works on PathItems (groups and compound paths use their first path).</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
