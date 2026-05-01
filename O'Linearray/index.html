@@ -57,6 +57,19 @@
             </label>
         </section>
 
+        <section class="panel" data-lockable id="stackSection" data-show-active>
+            <h2>Items</h2>
+            <div id="stackList" class="stack-list"></div>
+            <button id="addSlotBtn" class="stack-add-btn" type="button">+ ADD SLOT</button>
+            <p class="sub">Top of list = path start, bottom = path end. Empty slots are skipped. Drag to reorder.</p>
+        </section>
+
+        <section class="panel" data-lockable id="pathSection" data-show-active>
+            <h2>Path</h2>
+            <button id="replacePathBtn" class="action-btn" type="button">REPLACE PATH</button>
+            <p class="sub">Select another path object in Illustrator, then press REPLACE PATH.</p>
+        </section>
+
         <section class="panel" data-lockable id="quantitySection" data-show-active>
             <h2>Quantity</h2>
             <div class="qty-row">
@@ -145,7 +158,7 @@
                     <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
                 </div>
             </div>
-            <p class="footer-note">First non-path = end symbol, last non-path = start symbol, middles fill the path. RESET re-rolls the random fill, BAKE TO SYMBOL stores path+items as a symbol.</p>
+            <p class="footer-note">RESET re-rolls the random fill (auto mode), BAKE TO SYMBOL stores current path+items as a symbol.</p>
         </section>
     </main>
 

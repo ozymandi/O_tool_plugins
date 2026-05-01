@@ -8,10 +8,8 @@ var olinearraySession = {
     active: false,
     pathItem: null,
     previewGroup: null,
-    startSymbol: null,
-    endSymbol: null,
-    middleSymbols: [],
-    pl: [],
+    stack: [],         // [{ symbolName: string|null }]
+    pl: [],            // [{ symbolName, w, jitter }]
     rndJitter: [],
     manualMode: false
 };
@@ -111,9 +109,7 @@ function olinearrayResetSession(removePreview) {
     olinearraySession.active = false;
     olinearraySession.pathItem = null;
     olinearraySession.previewGroup = null;
-    olinearraySession.startSymbol = null;
-    olinearraySession.endSymbol = null;
-    olinearraySession.middleSymbols = [];
+    olinearraySession.stack = [];
     olinearraySession.pl = [];
     olinearraySession.rndJitter = [];
     olinearraySession.manualMode = false;
@@ -124,6 +120,41 @@ function olinearrayRefreshJitter() {
     for (var i = 0; i < 2000; i++) {
         olinearraySession.rndJitter.push((Math.random() * 2) - 1);
     }
+}
+
+// ---------- SYMBOL HELPERS ----------
+
+function olinearrayGetSymbolByName(doc, name) {
+    if (!name) return null;
+    try {
+        for (var i = 0; i < doc.symbols.length; i++) {
+            if (doc.symbols[i].name === name) return doc.symbols[i];
+        }
+    } catch (e) {}
+    return null;
+}
+
+function olinearrayListDocSymbolNames(doc) {
+    var names = [];
+    try {
+        for (var i = 0; i < doc.symbols.length; i++) {
+            names.push(doc.symbols[i].name);
+        }
+    } catch (e) {}
+    return names;
+}
+
+function olinearrayProbeSymbolWidth(doc, sym) {
+    var tempGroup = doc.groupItems.add();
+    var w = 0;
+    try {
+        var tempItem = tempGroup.symbolItems.add(sym);
+        w = tempItem.width;
+    } catch (e) {
+        olinearrayLog("probeSymbolWidth: " + e.message);
+    }
+    try { tempGroup.remove(); } catch (e2) {}
+    return w;
 }
 
 // ---------- PATH SAMPLING ----------
@@ -191,24 +222,7 @@ function olinearrayGetInfo(data, dist) {
     };
 }
 
-// ---------- SYMBOL WIDTH PROBE ----------
-
-function olinearrayProbeSymbolWidth(doc, sym) {
-    // Drop a temp symbol item, read width, remove. Use a throwaway group as parent.
-    var tempGroup = doc.groupItems.add();
-    var tempItem;
-    var w = 0;
-    try {
-        tempItem = tempGroup.symbolItems.add(sym);
-        w = tempItem.width;
-    } catch (e) {
-        olinearrayLog("probeSymbolWidth: " + e.message);
-    }
-    try { tempGroup.remove(); } catch (e2) {}
-    return w;
-}
-
-// ---------- DRAW ----------
+// ---------- PLACEMENT ----------
 
 function olinearrayPlaceItem(item, data, dist, off, anchorMode, rotateAlong) {
     var inf = olinearrayGetInfo(data, dist);
@@ -236,6 +250,31 @@ function olinearrayPlaceItem(item, data, dist, off, anchorMode, rotateAlong) {
     }
 }
 
+// ---------- DRAW ----------
+
+function olinearrayResolveFilledSymbols(doc) {
+    var filled = [];
+    for (var i = 0; i < olinearraySession.stack.length; i++) {
+        var slot = olinearraySession.stack[i];
+        if (!slot || !slot.symbolName) continue;
+        var sym = olinearrayGetSymbolByName(doc, slot.symbolName);
+        if (sym) filled.push(sym);
+    }
+    return filled;
+}
+
+function olinearrayDeriveStartEndMiddles(filledSymbols) {
+    var n = filledSymbols.length;
+    if (n === 0) return null;
+    if (n === 1) return { start: filledSymbols[0], end: null, middles: [filledSymbols[0]] };
+    if (n === 2) return { start: filledSymbols[0], end: filledSymbols[1], middles: [filledSymbols[0]] };
+    return {
+        start: filledSymbols[0],
+        end: filledSymbols[n - 1],
+        middles: filledSymbols.slice(1, n - 1)
+    };
+}
+
 function olinearrayRedraw(config) {
     var doc = app.activeDocument;
     if (!olinearraySession.pathItem) return 0;
@@ -245,18 +284,36 @@ function olinearrayRedraw(config) {
     }
     olinearraySession.previewGroup = doc.groupItems.add();
 
+    var filled = olinearrayResolveFilledSymbols(doc);
+    if (filled.length === 0) {
+        olinearraySession.pl = [];
+        return 0;
+    }
+
     var data = olinearrayGetPathData(olinearraySession.pathItem);
     if (data.total <= 0) return 0;
     var total = data.total;
 
-    var sIt = olinearraySession.previewGroup.symbolItems.add(olinearraySession.startSymbol);
-    var eIt = olinearraySession.previewGroup.symbolItems.add(olinearraySession.endSymbol);
+    var derived = olinearrayDeriveStartEndMiddles(filled);
+    var startSymbol = derived.start;
+    var endSymbol = derived.end;
+    var middles = derived.middles;
+
+    // Place start (always)
+    var sIt = olinearraySession.previewGroup.symbolItems.add(startSymbol);
     var startL = sIt.width / 2;
-    var endL = total - eIt.width / 2;
 
-    var middles = olinearraySession.middleSymbols;
-    if (!middles || middles.length === 0) middles = [olinearraySession.startSymbol];
+    // Place end (if distinct)
+    var eIt = null;
+    var endL;
+    if (endSymbol) {
+        eIt = olinearraySession.previewGroup.symbolItems.add(endSymbol);
+        endL = total - eIt.width / 2;
+    } else {
+        endL = total;
+    }
 
+    // Auto fill pl if not in manual mode
     if (!olinearraySession.manualMode) {
         olinearraySession.pl = [];
         var curRun = startL;
@@ -268,10 +325,11 @@ function olinearrayRedraw(config) {
             if (safety > 5000) break;
             var sym = middles[Math.floor(Math.random() * middles.length)];
             var w = olinearrayProbeSymbolWidth(doc, sym);
+            if (w <= 0) break;
             var pD = config.touch ? curRun + config.gap + w / 2 : curRun + config.step;
             if (pD + w / 2 > endL) break;
             olinearraySession.pl.push({
-                sym: sym,
+                symbolName: sym.name,
                 w: w,
                 jitter: jitter[idx % jitter.length]
             });
@@ -282,6 +340,7 @@ function olinearrayRedraw(config) {
     }
 
     var pl = olinearraySession.pl;
+
     var scale = 1.0;
     var wStep = config.step;
     if (config.touch && config.fit && pl.length > 0) {
@@ -295,12 +354,14 @@ function olinearrayRedraw(config) {
     }
 
     olinearrayPlaceItem(sIt, data, 0, config.offset, config.anchor, config.rotate);
-    olinearrayPlaceItem(eIt, data, total, config.offset, config.anchor, config.rotate);
+    if (eIt) olinearrayPlaceItem(eIt, data, total, config.offset, config.anchor, config.rotate);
 
     var run = startL;
     var fCur = wStep;
     for (var k = 0; k < pl.length; k++) {
-        var it = olinearraySession.previewGroup.symbolItems.add(pl[k].sym);
+        var symRef = olinearrayGetSymbolByName(doc, pl[k].symbolName);
+        if (!symRef) continue; // skip stale entries
+        var it = olinearraySession.previewGroup.symbolItems.add(symRef);
         if (config.touch && config.fit) {
             it.width *= scale;
             if (config.scaleMode === "uniform") it.height *= scale;
@@ -311,12 +372,19 @@ function olinearrayRedraw(config) {
         fCur += wStep;
     }
     try { sIt.zOrder(ZOrderMethod.BRINGTOFRONT); } catch (e3) {}
-    try { eIt.zOrder(ZOrderMethod.BRINGTOFRONT); } catch (e4) {}
+    if (eIt) { try { eIt.zOrder(ZOrderMethod.BRINGTOFRONT); } catch (e4) {} }
 
-    return pl.length + 2;
+    return pl.length + (endSymbol ? 2 : 1);
 }
 
 // ---------- ENDPOINTS ----------
+
+function olinearrayBuildStackResponse(doc) {
+    return {
+        stack: olinearraySession.stack,
+        docSymbols: olinearrayListDocSymbolNames(doc)
+    };
+}
 
 function olinearrayStart(encodedConfig) {
     try {
@@ -362,13 +430,17 @@ function olinearrayStart(encodedConfig) {
             throw new Error("Could not convert any selected items into symbols.");
         }
 
-        olinearraySession.pathItem = pathItem;
-        olinearraySession.startSymbol = processedSymbols[processedSymbols.length - 1];
-        olinearraySession.endSymbol = processedSymbols[0];
-        olinearraySession.middleSymbols = processedSymbols.slice(1, processedSymbols.length - 1);
-        if (olinearraySession.middleSymbols.length === 0) {
-            olinearraySession.middleSymbols = [olinearraySession.startSymbol];
+        // Build initial stack to match original behavior:
+        //   stack[0] = startSymbol (last in selection),
+        //   stack[last] = endSymbol (first in selection),
+        //   middles in between
+        // i.e. reverse of processedSymbols
+        olinearraySession.stack = [];
+        for (var p = processedSymbols.length - 1; p >= 0; p--) {
+            olinearraySession.stack.push({ symbolName: processedSymbols[p].name });
         }
+
+        olinearraySession.pathItem = pathItem;
         olinearraySession.pl = [];
         olinearraySession.manualMode = false;
         olinearraySession.previewGroup = null;
@@ -377,7 +449,12 @@ function olinearrayStart(encodedConfig) {
 
         var drawn = olinearrayRedraw(config);
         app.redraw();
-        return olinearrayResponse(true, "Preview ready (" + drawn + " items).", { items: drawn });
+        var stackInfo = olinearrayBuildStackResponse(doc);
+        return olinearrayResponse(true, "Preview ready (" + drawn + " items).", {
+            items: drawn,
+            stack: stackInfo.stack,
+            docSymbols: stackInfo.docSymbols
+        });
     } catch (error) {
         olinearrayLog(error.message || String(error));
         olinearrayResetSession(true);
@@ -398,6 +475,78 @@ function olinearrayUpdate(encodedConfig) {
     }
 }
 
+function olinearrayGetStack() {
+    try {
+        if (!olinearraySession.active) return olinearrayResponse(false, "No active session.");
+        var doc = app.activeDocument;
+        var info = olinearrayBuildStackResponse(doc);
+        return olinearrayResponse(true, "OK.", {
+            stack: info.stack,
+            docSymbols: info.docSymbols
+        });
+    } catch (error) {
+        olinearrayLog(error.message || String(error));
+        return olinearrayResponse(false, error.message || String(error));
+    }
+}
+
+function olinearraySetStack(encodedConfig) {
+    try {
+        if (!olinearraySession.active) return olinearrayResponse(false, "No active session.");
+        var raw = olinearrayParseConfig(encodedConfig);
+        var config = olinearrayValidateConfig(raw);
+        var newStack = [];
+        if (raw.stack && raw.stack.length) {
+            for (var i = 0; i < raw.stack.length; i++) {
+                var s = raw.stack[i] || {};
+                var name = (typeof s.symbolName === "string" && s.symbolName.length) ? s.symbolName : null;
+                newStack.push({ symbolName: name });
+            }
+        }
+        olinearraySession.stack = newStack;
+        // Stack edits reset auto-fill so pool changes show up immediately
+        olinearraySession.manualMode = false;
+        olinearraySession.pl = [];
+        var drawn = olinearrayRedraw(config);
+        app.redraw();
+        var doc = app.activeDocument;
+        var info = olinearrayBuildStackResponse(doc);
+        return olinearrayResponse(true, "Stack updated (" + drawn + " items).", {
+            items: drawn,
+            stack: info.stack,
+            docSymbols: info.docSymbols
+        });
+    } catch (error) {
+        olinearrayLog(error.message || String(error));
+        return olinearrayResponse(false, error.message || String(error));
+    }
+}
+
+function olinearrayReplacePath(encodedConfig) {
+    try {
+        if (!olinearraySession.active) return olinearrayResponse(false, "No active session.");
+        var config = olinearrayValidateConfig(olinearrayParseConfig(encodedConfig));
+        var doc = olinearrayEnsureDocument();
+        var sel = doc.selection;
+        var newPath = null;
+        if (sel && sel.length) {
+            for (var i = 0; i < sel.length; i++) {
+                if (sel[i].typename === "PathItem") { newPath = sel[i]; break; }
+            }
+        }
+        if (!newPath) throw new Error("Select a path item in Illustrator first.");
+        olinearraySession.pathItem = newPath;
+        olinearraySession.manualMode = false;
+        olinearraySession.pl = [];
+        var drawn = olinearrayRedraw(config);
+        app.redraw();
+        return olinearrayResponse(true, "Path replaced (" + drawn + " items).", { items: drawn });
+    } catch (error) {
+        olinearrayLog(error.message || String(error));
+        return olinearrayResponse(false, error.message || String(error));
+    }
+}
+
 function olinearrayQty(encodedConfig) {
     try {
         if (!olinearraySession.active) return olinearrayResponse(false, "No active session.");
@@ -405,6 +554,12 @@ function olinearrayQty(encodedConfig) {
         var raw = olinearrayParseConfig(encodedConfig);
         var action = (raw.qtyAction === "remove") ? "remove" : "add";
         var at = raw.qtyAt || "center";
+
+        var doc = app.activeDocument;
+        var filled = olinearrayResolveFilledSymbols(doc);
+        var derived = olinearrayDeriveStartEndMiddles(filled);
+        if (!derived) throw new Error("Stack has no symbols. Add a slot with a symbol first.");
+        var middles = derived.middles;
 
         olinearraySession.manualMode = true;
 
@@ -415,11 +570,13 @@ function olinearrayQty(encodedConfig) {
         else idx = Math.floor(pl.length / 2);
 
         if (action === "add") {
-            var middles = olinearraySession.middleSymbols;
-            if (!middles || middles.length === 0) middles = [olinearraySession.startSymbol];
             var sym = middles[Math.floor(Math.random() * middles.length)];
-            var w = olinearrayProbeSymbolWidth(app.activeDocument, sym);
-            pl.splice(idx, 0, { sym: sym, w: w, jitter: (Math.random() * 2) - 1 });
+            var w = olinearrayProbeSymbolWidth(doc, sym);
+            pl.splice(idx, 0, {
+                symbolName: sym.name,
+                w: w,
+                jitter: (Math.random() * 2) - 1
+            });
         } else if (pl.length > 0) {
             var tIdx = (idx >= pl.length) ? pl.length - 1 : idx;
             pl.splice(tIdx, 1);
@@ -477,7 +634,6 @@ function olinearrayApply() {
     try {
         if (!olinearraySession.active) return olinearrayResponse(false, "No active session.");
         var n = olinearraySession.previewGroup ? olinearraySession.previewGroup.pageItems.length : 0;
-        // Detach refs but keep preview on canvas.
         olinearrayResetSession(false);
         app.redraw();
         return olinearrayResponse(true, "Applied " + n + " items.", { items: n });

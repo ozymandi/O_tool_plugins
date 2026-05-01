@@ -29,7 +29,9 @@
         previewQueued: false,
         activeDropdown: null,
         anchor: DEFAULTS.anchor,
-        scaleMode: DEFAULTS.scaleMode
+        scaleMode: DEFAULTS.scaleMode,
+        stack: [],          // [{ symbolName: string|null }, ...] mirror of host
+        docSymbols: []      // [name, ...]
     };
 
     var fields = {
@@ -68,6 +70,9 @@
     };
 
     var qtyButtons = Array.prototype.slice.call(document.querySelectorAll(".qty-btn"));
+    var stackListEl = document.getElementById("stackList");
+    var addSlotBtn = document.getElementById("addSlotBtn");
+    var replacePathBtn = document.getElementById("replacePathBtn");
 
     var statusEl = document.getElementById("status");
     var statusDotEl = document.getElementById("statusDot");
@@ -99,7 +104,7 @@
         var busy = state.busy;
         var locked = idle || busy;
 
-        var lockableInputs = document.querySelectorAll('.panel[data-lockable] input, .panel[data-lockable] button, .panel[data-lockable] .custom-select');
+        var lockableInputs = document.querySelectorAll('.panel[data-lockable] input, .panel[data-lockable] select, .panel[data-lockable] button, .panel[data-lockable] .custom-select');
         Array.prototype.forEach.call(lockableInputs, function (el) {
             if (el.tagName === "DIV") {
                 el.style.pointerEvents = locked ? "none" : "";
@@ -378,6 +383,9 @@
             var response = await callHost("olinearrayStart", cfg);
             if (!response.ok) throw new Error(response.message || "Could not start.");
             state.active = true;
+            state.stack = response.stack || [];
+            state.docSymbols = response.docSymbols || [];
+            renderStack();
             setStatus("success", response.message || "Preview ready.");
             actionHintEl.textContent = "Adjust parameters. APPLY commits, BAKE TO SYMBOL stores variant, CANCEL reverts.";
         } catch (error) {
@@ -402,6 +410,9 @@
             var response = await callHost("olinearrayApply");
             if (!response.ok) throw new Error(response.message || "Apply failed.");
             state.active = false;
+            state.stack = [];
+            state.docSymbols = [];
+            renderStack();
             setStatus("success", response.message || "Applied.");
             actionHintEl.textContent = "Select 1 path + 2+ items, then press LINEARRAY.";
         } catch (error) {
@@ -422,6 +433,9 @@
             var response = await callHost("olinearrayCancel");
             if (!response.ok) throw new Error(response.message || "Cancel failed.");
             state.active = false;
+            state.stack = [];
+            state.docSymbols = [];
+            renderStack();
             setStatus("info", response.message || "Cancelled.");
             actionHintEl.textContent = "Select 1 path + 2+ items, then press LINEARRAY.";
         } catch (error) {
@@ -479,6 +493,194 @@
             var response = await callHost("olinearrayQty", cfg);
             if (!response.ok) throw new Error(response.message || "Quantity action failed.");
             setStatus("success", response.message || "Done.");
+        } catch (error) {
+            setStatus("error", error.message);
+        } finally {
+            setBusy(false);
+            refreshControlStates();
+        }
+    }
+
+    // ---------- STACK ----------
+
+    function renderStack() {
+        stackListEl.innerHTML = "";
+        if (!state.stack.length) {
+            var hint = document.createElement("p");
+            hint.className = "sub";
+            hint.style.margin = "0";
+            hint.textContent = "Empty. Press + ADD SLOT.";
+            stackListEl.appendChild(hint);
+            return;
+        }
+        for (var i = 0; i < state.stack.length; i++) {
+            stackListEl.appendChild(buildStackRow(i, state.stack[i]));
+        }
+    }
+
+    function buildStackRow(index, slot) {
+        var row = document.createElement("div");
+        row.className = "stack-row";
+        row.setAttribute("draggable", "true");
+        row.setAttribute("data-index", String(index));
+
+        var drag = document.createElement("div");
+        drag.className = "stack-drag";
+        drag.textContent = "⋮⋮"; // double vertical ellipsis
+        drag.title = "Drag to reorder";
+        row.appendChild(drag);
+
+        var select = document.createElement("select");
+        select.className = "stack-symbol";
+        var emptyOpt = document.createElement("option");
+        emptyOpt.value = "";
+        emptyOpt.textContent = "— empty —";
+        select.appendChild(emptyOpt);
+        for (var s = 0; s < state.docSymbols.length; s++) {
+            var opt = document.createElement("option");
+            opt.value = state.docSymbols[s];
+            opt.textContent = state.docSymbols[s];
+            select.appendChild(opt);
+        }
+        var current = slot && slot.symbolName ? slot.symbolName : "";
+        // If symbol no longer in doc list, append it as a stale option so user sees it
+        if (current && state.docSymbols.indexOf(current) === -1) {
+            var stale = document.createElement("option");
+            stale.value = current;
+            stale.textContent = current + " (missing)";
+            select.appendChild(stale);
+        }
+        select.value = current;
+        if (!current) select.classList.add("is-empty");
+        select.addEventListener("change", function () {
+            var name = select.value || null;
+            handleAssignSymbol(index, name);
+        });
+        row.appendChild(select);
+
+        var remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "stack-remove";
+        remove.title = "Remove slot";
+        remove.innerHTML = '<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
+        remove.addEventListener("click", function () {
+            handleRemoveSlot(index);
+        });
+        row.appendChild(remove);
+
+        bindRowDrag(row);
+        return row;
+    }
+
+    function bindRowDrag(row) {
+        row.addEventListener("dragstart", function (e) {
+            row.classList.add("is-dragging");
+            try { e.dataTransfer.effectAllowed = "move"; } catch (er) {}
+            try { e.dataTransfer.setData("text/plain", row.getAttribute("data-index")); } catch (er2) {}
+        });
+        row.addEventListener("dragend", function () {
+            row.classList.remove("is-dragging");
+            Array.prototype.forEach.call(stackListEl.querySelectorAll(".stack-row"), function (r) {
+                r.classList.remove("drop-before", "drop-after");
+            });
+        });
+        row.addEventListener("dragover", function (e) {
+            if (!stackListEl.querySelector(".is-dragging")) return;
+            e.preventDefault();
+            try { e.dataTransfer.dropEffect = "move"; } catch (er) {}
+            var rect = row.getBoundingClientRect();
+            var before = (e.clientY - rect.top) < rect.height / 2;
+            row.classList.toggle("drop-before", before);
+            row.classList.toggle("drop-after", !before);
+        });
+        row.addEventListener("dragleave", function () {
+            row.classList.remove("drop-before", "drop-after");
+        });
+        row.addEventListener("drop", function (e) {
+            e.preventDefault();
+            var dragging = stackListEl.querySelector(".stack-row.is-dragging");
+            if (!dragging || dragging === row) return;
+            var fromIdx = parseInt(dragging.getAttribute("data-index"), 10);
+            var toIdx = parseInt(row.getAttribute("data-index"), 10);
+            if (isNaN(fromIdx) || isNaN(toIdx)) return;
+            var rect = row.getBoundingClientRect();
+            var before = (e.clientY - rect.top) < rect.height / 2;
+            var insertAt = before ? toIdx : toIdx + 1;
+            if (fromIdx < insertAt) insertAt -= 1;
+            if (fromIdx === insertAt) return;
+            var moved = state.stack.splice(fromIdx, 1)[0];
+            state.stack.splice(insertAt, 0, moved);
+            renderStack();
+            sendStackUpdate();
+        });
+    }
+
+    async function sendStackUpdate() {
+        if (state.busy || !state.active) return;
+        if (state.previewPending) { try { await state.previewPending; } catch (e) {} }
+        setBusy(true);
+        try {
+            var cfg = collectConfig();
+            cfg.stack = state.stack;
+            var response = await callHost("olinearraySetStack", cfg);
+            if (!response.ok) {
+                setStatus("error", response.message || "Stack update failed.");
+                return;
+            }
+            if (response.stack) {
+                state.stack = response.stack;
+                renderStack();
+            }
+            setStatus("success", response.message || "Stack updated.");
+        } catch (error) {
+            setStatus("error", error.message);
+        } finally {
+            setBusy(false);
+            refreshControlStates();
+        }
+    }
+
+    function handleAssignSymbol(index, symbolName) {
+        if (!state.stack[index]) return;
+        state.stack[index] = { symbolName: symbolName };
+        renderStack();
+        sendStackUpdate();
+    }
+
+    function handleRemoveSlot(index) {
+        if (index < 0 || index >= state.stack.length) return;
+        state.stack.splice(index, 1);
+        renderStack();
+        sendStackUpdate();
+    }
+
+    function handleAddSlot() {
+        state.stack.push({ symbolName: null });
+        renderStack();
+        sendStackUpdate();
+    }
+
+    async function loadStackFromHost() {
+        try {
+            var resp = await callHost("olinearrayGetStack");
+            if (resp.ok) {
+                state.stack = resp.stack || [];
+                state.docSymbols = resp.docSymbols || [];
+                renderStack();
+            }
+        } catch (e) {}
+    }
+
+    async function replacePath() {
+        if (state.busy || !state.active) return;
+        if (state.previewPending) { try { await state.previewPending; } catch (e) {} }
+        setBusy(true);
+        setStatus("info", "Replacing path...");
+        try {
+            var cfg = collectConfig();
+            var response = await callHost("olinearrayReplacePath", cfg);
+            if (!response.ok) throw new Error(response.message || "Could not replace path.");
+            setStatus("success", response.message || "Path replaced.");
         } catch (error) {
             setStatus("error", error.message);
         } finally {
@@ -700,6 +902,17 @@
         });
     }
 
+    function bindStackButtons() {
+        addSlotBtn.addEventListener("click", function () {
+            if (addSlotBtn.disabled) return;
+            handleAddSlot();
+        });
+        replacePathBtn.addEventListener("click", function () {
+            if (replacePathBtn.disabled) return;
+            replacePath();
+        });
+    }
+
     SLIDER_PAIRS.forEach(function (pair) { bindSliderPair(pair[0], pair[1]); });
     bindCheckbox("touch");
     bindCheckbox("fit");
@@ -708,6 +921,7 @@
     bindScaleModeButtons();
     bindResets();
     bindQtyButtons();
+    bindStackButtons();
 
     buttons.primary.addEventListener("click", function () {
         if (buttons.primary.disabled) return;
