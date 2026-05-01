@@ -2,8 +2,8 @@
     var STORAGE_KEY = "obend.panel.settings.v1";
 
     var state = {
+        editing: false,
         busy: false,
-        previewActive: false,
         previewPending: null,
         previewQueued: false
     };
@@ -26,12 +26,11 @@
         radialExpand: document.getElementById("radialExpand"),
         radialExpandRange: document.getElementById("radialExpandRange"),
         axisShift: document.getElementById("axisShift"),
-        axisShiftRange: document.getElementById("axisShiftRange"),
-        livePreview: document.getElementById("livePreview")
+        axisShiftRange: document.getElementById("axisShiftRange")
     };
 
     var buttons = {
-        apply: document.getElementById("applyBtn"),
+        action: document.getElementById("actionBtn"),
         cancel: document.getElementById("cancelBtn"),
         reset: document.getElementById("resetBtn")
     };
@@ -84,25 +83,36 @@
         try { window.localStorage.setItem(STORAGE_KEY, value); } catch (e) {}
     }
 
-    function setBusy(isBusy) {
-        Object.keys(buttons).forEach(function (key) {
-            if (buttons[key]) buttons[key].disabled = isBusy;
-        });
-        if (!isBusy) {
-            buttons.cancel.disabled = !state.previewActive;
-        }
-        state.busy = isBusy;
-    }
-
     function setStatus(kind, message) {
         statusEl.textContent = message;
         statusEl.title = message;
         statusDotEl.className = "status-indicator status-indicator--" + kind;
     }
 
-    function updatePreviewControls() {
-        buttons.cancel.disabled = !state.previewActive || state.busy;
-        buttons.apply.textContent = state.previewActive ? "APPLY PREVIEW" : "APPLY";
+    function refreshControlStates() {
+        var idle = !state.editing;
+        var busy = state.busy;
+        var locked = idle || busy;
+
+        // Lock all interactive elements inside lockable panels
+        var lockableInputs = document.querySelectorAll('.panel[data-lockable] input, .panel[data-lockable] button');
+        Array.prototype.forEach.call(lockableInputs, function (el) {
+            el.disabled = locked;
+        });
+
+        buttons.action.disabled = busy;
+        buttons.action.textContent = state.editing ? "APPLY" : "BEND";
+
+        buttons.cancel.disabled = locked;
+        buttons.reset.disabled = locked;
+
+        document.body.classList.toggle("is-idle", idle);
+        document.body.classList.toggle("is-editing", !idle);
+    }
+
+    function setBusy(isBusy) {
+        state.busy = isBusy;
+        refreshControlStates();
     }
 
     function getCepApi() {
@@ -264,28 +274,9 @@
         return evalHost(script).then(parseHostResponse);
     }
 
-    async function runHostAction(label, hostFunction, config) {
-        saveSettings();
-        setBusy(true);
-        setStatus("info", label + "...");
-        try {
-            var response = await callHost(hostFunction, config);
-            if (!response.ok) throw new Error(response.message || "Illustrator returned an error.");
-            setStatus("success", response.message || (label + " complete."));
-            return response;
-        } catch (error) {
-            setStatus("error", error.message);
-            return null;
-        } finally {
-            setBusy(false);
-            updatePreviewControls();
-        }
-    }
-
     function sendPreviewUpdate() {
-        if (!state.previewActive) return Promise.resolve(null);
+        if (!state.editing) return Promise.resolve(null);
         if (state.previewPending) {
-            // In-flight: mark that we want another roundtrip with the latest config when this one finishes.
             state.previewQueued = true;
             return state.previewPending;
         }
@@ -295,9 +286,8 @@
                 if (!response.ok) {
                     setStatus("error", response.message || "Preview update failed.");
                     if (response.message && response.message.indexOf("No active") !== -1) {
-                        state.previewActive = false;
-                        fields.livePreview.checked = false;
-                        updatePreviewControls();
+                        state.editing = false;
+                        refreshControlStates();
                     }
                 }
                 return response;
@@ -307,7 +297,7 @@
             })
             .finally(function () {
                 state.previewPending = null;
-                if (state.previewQueued && state.previewActive) {
+                if (state.previewQueued && state.editing) {
                     state.previewQueued = false;
                     sendPreviewUpdate();
                 }
@@ -316,77 +306,88 @@
     }
 
     function schedulePreviewUpdate() {
-        // No artificial delay: fire immediately, queue if a request is already in flight.
-        if (!state.previewActive) return;
+        if (!state.editing) return;
         sendPreviewUpdate();
     }
 
-    async function startLivePreview() {
-        if (state.busy) return false;
-        var config = collectConfig();
+    async function startBend() {
+        if (state.busy || state.editing) return;
+
+        // Force safe defaults on every new session for predictable starts.
+        // Keep saved Bend Angle / Limit / Center / Offset / Helix params (user's last working setup).
+        // Force Subdivisions back to 0 — it is the heaviest knob; user should ramp it up consciously.
+        fields.axis.value = "horizontal";
+        fields.direction.value = "normal";
+        syncPair("subdivisions", "subdivisionsRange", 0);
+        updateAxisButtons();
+        updateDirectionButtons();
         saveSettings();
+
+        var config = collectConfig();
         setBusy(true);
-        setStatus("info", "Starting preview...");
+        setStatus("info", "Starting bend...");
         try {
             var response = await callHost("obendStartPreview", config);
-            if (!response.ok) throw new Error(response.message || "Could not start preview.");
-            state.previewActive = true;
-            setStatus("success", response.message || "Preview started.");
-            return true;
-        } catch (error) {
-            setStatus("error", error.message);
-            return false;
-        } finally {
-            setBusy(false);
-            updatePreviewControls();
-        }
-    }
-
-    async function cancelLivePreview() {
-        if (state.busy) return;
-        state.previewQueued = false;
-        if (state.previewPending) {
-            try { await state.previewPending; } catch (e) {}
-        }
-        setBusy(true);
-        setStatus("info", "Cancelling preview...");
-        try {
-            var response = await callHost("obendCancelPreview");
-            if (!response.ok) throw new Error(response.message || "Cancel failed.");
-            state.previewActive = false;
-            setStatus("info", response.message || "Preview cancelled.");
+            if (!response.ok) throw new Error(response.message || "Could not start.");
+            state.editing = true;
+            setStatus("success", "Bend started. Adjust parameters, then APPLY.");
         } catch (error) {
             setStatus("error", error.message);
         } finally {
             setBusy(false);
-            updatePreviewControls();
+            refreshControlStates();
         }
     }
 
-    async function applyLivePreview() {
-        if (state.busy) return;
+    async function applyBend() {
+        if (state.busy || !state.editing) return;
+
         if (state.previewPending) {
             try { await state.previewPending; } catch (e) {}
         }
-        if (state.previewQueued && state.previewActive) {
+        if (state.previewQueued && state.editing) {
             state.previewQueued = false;
             await sendPreviewUpdate();
             if (state.previewPending) {
                 try { await state.previewPending; } catch (e) {}
             }
         }
+
         setBusy(true);
-        setStatus("info", "Applying preview...");
+        setStatus("info", "Applying...");
         try {
             var response = await callHost("obendApplyPreview");
             if (!response.ok) throw new Error(response.message || "Apply failed.");
-            state.previewActive = false;
-            setStatus("success", response.message || "Bend applied.");
+            state.editing = false;
+            setStatus("success", response.message || "Bend applied. Select another object to start again.");
         } catch (error) {
             setStatus("error", error.message);
         } finally {
             setBusy(false);
-            updatePreviewControls();
+            refreshControlStates();
+        }
+    }
+
+    async function cancelBend() {
+        if (state.busy || !state.editing) return;
+
+        state.previewQueued = false;
+        if (state.previewPending) {
+            try { await state.previewPending; } catch (e) {}
+        }
+
+        setBusy(true);
+        setStatus("info", "Cancelling...");
+        try {
+            var response = await callHost("obendCancelPreview");
+            if (!response.ok) throw new Error(response.message || "Cancel failed.");
+            state.editing = false;
+            setStatus("info", response.message || "Cancelled. Select an object to start again.");
+        } catch (error) {
+            setStatus("error", error.message);
+        } finally {
+            setBusy(false);
+            refreshControlStates();
         }
     }
 
@@ -394,14 +395,12 @@
         try {
             var handshake = await callHost("obendHandshake");
             if (!handshake.ok) throw new Error(handshake.message || "Could not connect to Illustrator.");
-            // If a stale session is still live in the host (panel reload while preview was on),
-            // silently cancel it so the panel always starts in a clean state.
+            // Always start clean: cancel any stale session left in the host.
             if (handshake.previewActive) {
                 try { await callHost("obendCancelPreview"); } catch (e) {}
             }
-            state.previewActive = false;
-            fields.livePreview.checked = false;
-            updatePreviewControls();
+            state.editing = false;
+            refreshControlStates();
             setStatus("success", handshake.message + " " + handshake.hostName + " " + handshake.hostVersion);
         } catch (error) {
             setStatus("error", error.message);
@@ -501,9 +500,7 @@
 
     function onParameterChanged() {
         saveSettings();
-        if (state.previewActive) {
-            schedulePreviewUpdate();
-        }
+        if (state.editing) schedulePreviewUpdate();
     }
 
     function bindSliderPair(numKey, rangeKey) {
@@ -511,12 +508,14 @@
         var rangeField = fields[rangeKey];
         if (rangeField) {
             rangeField.addEventListener("input", function () {
+                if (rangeField.disabled) return;
                 syncPair(numKey, rangeKey, rangeField.value);
                 onParameterChanged();
             });
         }
         if (numField) {
             numField.addEventListener("input", function () {
+                if (numField.disabled) return;
                 syncPair(numKey, rangeKey, numField.value);
                 onParameterChanged();
             });
@@ -526,6 +525,7 @@
     function bindSegRow(name, fieldKey, updateFn) {
         Array.prototype.forEach.call(document.querySelectorAll(".seg[data-" + name + "]"), function (button) {
             button.addEventListener("click", function () {
+                if (button.disabled) return;
                 fields[fieldKey].value = button.getAttribute("data-" + name);
                 updateFn();
                 onParameterChanged();
@@ -538,6 +538,7 @@
             var btn = resetButtons[key];
             if (!btn) return;
             btn.addEventListener("click", function () {
+                if (btn.disabled) return;
                 var rangeKey = key + "Range";
                 syncPair(key, rangeKey, DEFAULTS[key]);
                 onParameterChanged();
@@ -550,41 +551,28 @@
     bindSegRow("direction", "direction", updateDirectionButtons);
     bindResetButtons();
 
-    fields.livePreview.addEventListener("change", async function () {
-        if (fields.livePreview.checked) {
-            var ok = await startLivePreview();
-            if (!ok) {
-                fields.livePreview.checked = false;
-            }
-        } else {
-            await cancelLivePreview();
-        }
+    buttons.action.addEventListener("click", function () {
+        if (buttons.action.disabled) return;
+        if (state.editing) applyBend();
+        else startBend();
     });
 
-    buttons.apply.addEventListener("click", async function () {
-        if (state.previewActive) {
-            await applyLivePreview();
-            fields.livePreview.checked = false;
-        } else {
-            await runHostAction("Bending selection", "obendRun", collectConfig());
-        }
-    });
-
-    buttons.cancel.addEventListener("click", async function () {
-        await cancelLivePreview();
-        fields.livePreview.checked = false;
+    buttons.cancel.addEventListener("click", function () {
+        if (buttons.cancel.disabled) return;
+        cancelBend();
     });
 
     buttons.reset.addEventListener("click", function () {
+        if (buttons.reset.disabled) return;
         applySnapshot(getDefaultConfig());
         saveSettings();
         setStatus("info", "Parameters reset to defaults.");
-        if (state.previewActive) schedulePreviewUpdate();
+        if (state.editing) schedulePreviewUpdate();
     });
 
     restoreSettings();
     bindNumberWheel();
     bindNumericScrubbers();
-    updatePreviewControls();
+    refreshControlStates();
     initializePanel();
 })();

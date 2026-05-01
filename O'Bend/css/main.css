@@ -98,6 +98,16 @@ body.is-number-scrubbing * {
 [data-show-when] { display: none; }
 [data-show-when].is-visible { display: grid; }
 
+body.is-idle .panel[data-lockable] {
+    opacity: 0.45;
+    transition: opacity 0.12s ease-out;
+}
+
+body.is-editing .panel[data-lockable] {
+    opacity: 1;
+    transition: opacity 0.12s ease-out;
+}
+
 .action-row {
     display: grid;
     grid-template-columns: 1fr 1fr;

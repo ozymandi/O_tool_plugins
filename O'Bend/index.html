@@ -9,7 +9,7 @@
 </head>
 <body>
     <main class="app">
-        <section class="panel">
+        <section class="panel" data-lockable>
             <h2>Axis</h2>
             <div class="seg-row" role="group" aria-label="Bending axis">
                 <button class="seg" type="button" data-axis="horizontal">HORIZONTAL</button>
@@ -34,7 +34,7 @@
             </label>
         </section>
 
-        <section class="panel">
+        <section class="panel" data-lockable>
             <h2>Bend</h2>
 
             <label class="field">
@@ -122,7 +122,7 @@
             </div>
         </section>
 
-        <section class="panel">
+        <section class="panel" data-lockable>
             <h2>Helix</h2>
             <label class="field">
                 <span class="field-label">Radial Expand</span>
@@ -156,16 +156,12 @@
         </section>
 
         <section class="panel">
-            <label class="check">
-                <input id="livePreview" type="checkbox">
-                <span>Live Preview</span>
-            </label>
             <div class="action-row">
-                <button id="applyBtn" class="primary action-btn" type="button">APPLY</button>
+                <button id="actionBtn" class="primary action-btn" type="button">BEND</button>
                 <button id="cancelBtn" class="action-btn" type="button" disabled>CANCEL</button>
             </div>
-            <button id="resetBtn" class="action-btn" type="button">RESET PARAMETERS</button>
-            <p class="sub">Live Preview captures the current selection and updates as you change parameters. APPLY commits the preview, CANCEL reverts. Without Live Preview, APPLY runs once on the current selection (Ctrl+Z to undo).</p>
+            <button id="resetBtn" class="action-btn" type="button" disabled>RESET PARAMETERS</button>
+            <p class="sub">Select an object, then press BEND. The preview applies with safe defaults and parameters unlock for live editing. APPLY commits, CANCEL reverts.</p>
         </section>
 
         <section class="panel">
