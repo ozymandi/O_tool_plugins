@@ -46,7 +46,7 @@ PluginName/
 - [x] O'GridScale
 - [x] O'Linearray
 - [x] O'Autoshape
-- [ ] O'Math
+- [x] O'Math
 - [ ] O'Vertex
 - [ ] O'Voron
 - [ ] O'Symbol
