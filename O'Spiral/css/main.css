@@ -99,6 +99,9 @@ body.is-active .panel[data-lockable] {
 .action-row[data-show-active] { display: none; }
 body.is-active .action-row[data-show-active] { display: grid; }
 
+button[data-show-active] { display: none; }
+body.is-active button[data-show-active] { display: block; }
+
 .field { display: grid; gap: 4px; min-width: 0; }
 
 .field-label, .sub, .status, .footer-note {

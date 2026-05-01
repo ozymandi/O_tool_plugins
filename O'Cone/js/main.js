@@ -89,7 +89,6 @@
 
     var buttons = {
         primary: document.getElementById("primaryBtn"),
-        apply: document.getElementById("applyBtn"),
         cancel: document.getElementById("cancelBtn"),
         reset: document.getElementById("resetBtn"),
         qualityReset: document.getElementById("qualityResetBtn")
@@ -193,7 +192,6 @@
             buttons.primary.disabled = busy;
         }
 
-        buttons.apply.disabled = busy || !state.active;
         buttons.cancel.disabled = busy || !state.active;
         buttons.reset.disabled = locked;
 
@@ -953,11 +951,6 @@
         if (buttons.primary.disabled) return;
         if (state.active) applyCone();
         else startCone();
-    });
-
-    buttons.apply.addEventListener("click", function () {
-        if (buttons.apply.disabled) return;
-        applyCone();
     });
 
     buttons.cancel.addEventListener("click", function () {

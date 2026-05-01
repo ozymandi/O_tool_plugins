@@ -72,7 +72,6 @@
 
     var buttons = {
         primary: document.getElementById("primaryBtn"),
-        apply: document.getElementById("applyBtn"),
         cancel: document.getElementById("cancelBtn"),
         bake: document.getElementById("bakeBtn"),
         reset: document.getElementById("resetBtn"),
@@ -149,7 +148,6 @@
             buttons.primary.disabled = busy;
         }
 
-        buttons.apply.disabled = busy || !state.active;
         buttons.cancel.disabled = busy || !state.active;
         buttons.bake.disabled = busy || !state.active;
         buttons.reset.disabled = locked;
@@ -748,10 +746,6 @@
         if (buttons.primary.disabled) return;
         if (state.active) applyLine();
         else startLine();
-    });
-    buttons.apply.addEventListener("click", function () {
-        if (buttons.apply.disabled) return;
-        applyLine();
     });
     buttons.cancel.addEventListener("click", function () {
         if (buttons.cancel.disabled) return;
