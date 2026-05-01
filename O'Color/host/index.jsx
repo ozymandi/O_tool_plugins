@@ -185,19 +185,6 @@ function ocolorRandomize(encodedConfig) {
     }
 }
 
-function ocolorListSelectedSwatches() {
-    try {
-        var doc = ocolorEnsureDocument();
-        var swatches = ocolorGetSelectedSwatches(doc);
-        var msg = swatches.length > 0
-            ? swatches.length + " swatch(es) selected."
-            : "No swatches selected. Use Shift+click in the Swatches panel.";
-        return ocolorResponse(true, msg, { count: swatches.length });
-    } catch (error) {
-        return ocolorResponse(false, error.message || String(error), { count: 0 });
-    }
-}
-
 function ocolorHandshake() {
     try {
         var swatchCount = 0;

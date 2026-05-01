@@ -8,13 +8,11 @@
     };
 
     var buttons = {
-        randomize: document.getElementById("randomizeBtn"),
-        checkSwatches: document.getElementById("checkSwatchesBtn")
+        randomize: document.getElementById("randomizeBtn")
     };
 
     var statusEl = document.getElementById("status");
     var statusDotEl = document.getElementById("statusDot");
-    var swatchStatusEl = document.getElementById("swatchStatus");
 
     function getDefaultConfig() {
         return { doFill: true, doStroke: false };
@@ -44,8 +42,6 @@
         statusEl.title = message;
         statusDotEl.className = "status-indicator status-indicator--" + kind;
     }
-
-    function setSwatchStatus(text) { swatchStatusEl.textContent = text; }
 
     function refreshRandomizeButton() {
         var hasMode = fields.doFill.checked || fields.doStroke.checked;
@@ -130,28 +126,6 @@
         };
     }
 
-    async function checkSwatches() {
-        if (state.busy) return;
-        setBusy(true);
-        setStatus("info", "Reading swatches...");
-        try {
-            var response = await callHost("ocolorListSelectedSwatches");
-            if (!response.ok) throw new Error(response.message || "Could not read swatches.");
-            if (response.count > 0) {
-                setSwatchStatus("Selected swatches: " + response.count + ".");
-                setStatus("success", response.message || "Swatches ready.");
-            } else {
-                setSwatchStatus("Selected swatches: 0. Open the Swatches panel and pick colours first.");
-                setStatus("info", "No swatches selected yet.");
-            }
-        } catch (error) {
-            setSwatchStatus("Swatches: " + error.message);
-            setStatus("error", error.message);
-        } finally {
-            setBusy(false);
-        }
-    }
-
     async function randomize() {
         if (state.busy) return;
         var config = collectConfig();
@@ -165,9 +139,6 @@
         try {
             var response = await callHost("ocolorRandomize", config);
             if (!response.ok) throw new Error(response.message || "Randomize failed.");
-            if (typeof response.swatches === "number" && response.swatches > 0) {
-                setSwatchStatus("Selected swatches: " + response.swatches + ".");
-            }
             setStatus("success", response.message || "Done.");
         } catch (error) {
             setStatus("error", error.message);
@@ -180,14 +151,11 @@
         try {
             var handshake = await callHost("ocolorHandshake");
             if (!handshake.ok) throw new Error(handshake.message || "Could not connect to Illustrator.");
+            var msg = handshake.message + " " + handshake.hostName + " " + handshake.hostVersion;
             if (typeof handshake.swatches === "number") {
-                if (handshake.swatches > 0) {
-                    setSwatchStatus("Selected swatches: " + handshake.swatches + ".");
-                } else {
-                    setSwatchStatus("Selected swatches: 0. Open the Swatches panel and pick colours first.");
-                }
+                msg += " (" + handshake.swatches + " swatches selected)";
             }
-            setStatus("success", handshake.message + " " + handshake.hostName + " " + handshake.hostVersion);
+            setStatus("success", msg);
         } catch (error) {
             setStatus("error", error.message);
         }
@@ -202,7 +170,6 @@
         refreshRandomizeButton();
     });
 
-    buttons.checkSwatches.addEventListener("click", checkSwatches);
     buttons.randomize.addEventListener("click", randomize);
 
     restoreSettings();
