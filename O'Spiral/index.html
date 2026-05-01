@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Spiral</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body class="is-idle">
+    <main class="app">
+        <section class="panel" data-lockable>
+            <h2>Loop Mode</h2>
+            <div class="seg-row seg-row--2" role="group" aria-label="Loop mode">
+                <button class="seg" type="button" data-mode="total">TOTAL</button>
+                <button class="seg" type="button" data-mode="per-segment">PER SEGMENT</button>
+            </div>
+            <input id="mode" type="hidden" value="total">
+            <p class="sub">TOTAL spreads loops across the whole spiral. PER SEGMENT multiplies loops by the number of segments between circles.</p>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Loops</h2>
+            <label class="field">
+                <span class="field-label">Count</span>
+                <div class="slider-capsule">
+                    <input id="loops" type="number" min="1" max="1000" step="1" value="15">
+                    <div class="slider-track-area">
+                        <input id="loopsRange" type="range" min="1" max="200" step="1" value="15">
+                    </div>
+                    <button id="loopsResetBtn" class="slider-reset-btn" type="button" title="Reset to 15">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Randomness</h2>
+            <label class="field">
+                <span class="field-label">Amount (0-100)</span>
+                <div class="slider-capsule">
+                    <input id="randomness" type="number" min="0" max="100" step="1" value="0">
+                    <div class="slider-track-area">
+                        <input id="randomnessRange" type="range" min="0" max="100" step="1" value="0">
+                    </div>
+                    <button id="randomnessResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <p class="sub">Adds per-loop expansion noise. Value re-rolls on every parameter change.</p>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Direction</h2>
+            <div class="seg-row seg-row--2" role="group" aria-label="Direction">
+                <button class="seg" type="button" data-direction="cw">CW</button>
+                <button class="seg" type="button" data-direction="ccw">CCW</button>
+            </div>
+            <input id="direction" type="hidden" value="cw">
+        </section>
+
+        <section class="panel">
+            <button id="primaryBtn" class="primary action-btn" type="button">SPIRAL</button>
+            <div class="action-row" data-show-active>
+                <button id="applyBtn" class="action-btn" type="button" disabled>APPLY</button>
+                <button id="cancelBtn" class="action-btn" type="button" disabled>CANCEL</button>
+            </div>
+            <button id="resetBtn" class="action-btn" type="button" disabled>RESET PARAMETERS</button>
+            <p class="sub" id="actionHint">Select 2 or more circles, then press SPIRAL.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">Circles are sorted top-down then left-to-right (10pt vertical tolerance). Spiral inherits stroke colour from the first circle (or black if not stroked).</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>

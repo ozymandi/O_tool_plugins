@@ -41,7 +41,7 @@ PluginName/
 - [x] O'Color
 - [x] O'Fill
 - [x] O'Cone
-- [ ] O'Spiral
+- [x] O'Spiral
 - [ ] O'Line
 - [ ] O'GridScale
 - [ ] O'Linearray
