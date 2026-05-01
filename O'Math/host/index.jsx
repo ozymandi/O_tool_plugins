@@ -206,15 +206,30 @@ function omathGetPt(type, u, v, valA, valB, valC, valD) {
 
 function omathApplyCustomSmooth(pathItem) {
     var pts = pathItem.pathPoints;
-    if (pts.length < 3) return;
-    for (var i = 1; i < pts.length - 1; i++) {
-        var p0 = pts[i - 1].anchor;
-        var p1 = pts[i].anchor;
-        var p2 = pts[i + 1].anchor;
-        var dx = (p2[0] - p0[0]) * 0.15;
-        var dy = (p2[1] - p0[1]) * 0.15;
-        pts[i].rightDirection = [p1[0] + dx, p1[1] + dy];
-        pts[i].leftDirection = [p1[0] - dx, p1[1] - dy];
+    var n = pts.length;
+    if (n < 3) return;
+    if (pathItem.closed) {
+        // Cyclic: every anchor is smoothed against its neighbors.
+        for (var i = 0; i < n; i++) {
+            var p0 = pts[(i - 1 + n) % n].anchor;
+            var p1 = pts[i].anchor;
+            var p2 = pts[(i + 1) % n].anchor;
+            var dx = (p2[0] - p0[0]) * 0.15;
+            var dy = (p2[1] - p0[1]) * 0.15;
+            pts[i].rightDirection = [p1[0] + dx, p1[1] + dy];
+            pts[i].leftDirection = [p1[0] - dx, p1[1] - dy];
+        }
+    } else {
+        // Open path: skip first/last endpoints.
+        for (var j = 1; j < n - 1; j++) {
+            var pp0 = pts[j - 1].anchor;
+            var pp1 = pts[j].anchor;
+            var pp2 = pts[j + 1].anchor;
+            var ddx = (pp2[0] - pp0[0]) * 0.15;
+            var ddy = (pp2[1] - pp0[1]) * 0.15;
+            pts[j].rightDirection = [pp1[0] + ddx, pp1[1] + ddy];
+            pts[j].leftDirection = [pp1[0] - ddx, pp1[1] - ddy];
+        }
     }
 }
 
@@ -310,6 +325,7 @@ function omathRedraw(config) {
             qpath.stroked = true;
             qpath.strokeColor = col;
             qpath.strokeWidth = 0.5;
+            if (doSmooth) omathApplyCustomSmooth(qpath);
             totalPaths++;
         }
     }
