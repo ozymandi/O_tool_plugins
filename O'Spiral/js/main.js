@@ -14,6 +14,8 @@
         loopsRange: document.getElementById("loopsRange"),
         randomness: document.getElementById("randomness"),
         randomnessRange: document.getElementById("randomnessRange"),
+        density: document.getElementById("density"),
+        densityRange: document.getElementById("densityRange"),
         direction: document.getElementById("direction")
     };
 
@@ -23,7 +25,8 @@
         cancel: document.getElementById("cancelBtn"),
         reset: document.getElementById("resetBtn"),
         loopsReset: document.getElementById("loopsResetBtn"),
-        randomnessReset: document.getElementById("randomnessResetBtn")
+        randomnessReset: document.getElementById("randomnessResetBtn"),
+        densityReset: document.getElementById("densityResetBtn")
     };
 
     var statusEl = document.getElementById("status");
@@ -34,12 +37,14 @@
         mode: "total",
         loops: 15,
         randomness: 0,
+        density: 12,
         direction: "cw"
     };
 
     var SLIDER_PAIRS = [
         ["loops", "loopsRange"],
-        ["randomness", "randomnessRange"]
+        ["randomness", "randomnessRange"],
+        ["density", "densityRange"]
     ];
 
     function getDefaultConfig() { return JSON.parse(JSON.stringify(DEFAULTS)); }
@@ -190,6 +195,7 @@
             mode: fields.mode.value,
             loops: fields.loops.value,
             randomness: fields.randomness.value,
+            density: fields.density.value,
             direction: fields.direction.value
         };
     }
@@ -227,10 +233,13 @@
         if (!Number.isFinite(randomness)) randomness = 0;
         if (randomness < 0) randomness = 0;
         if (randomness > 100) randomness = 100;
+        var density = parseInt(fields.density.value, 10);
+        if (!Number.isFinite(density) || density < 4) density = 4;
         return {
             mode: String(fields.mode.value || "total"),
             loops: loops,
             randomness: randomness,
+            density: density,
             direction: String(fields.direction.value || "cw")
         };
     }
@@ -492,6 +501,11 @@
     buttons.randomnessReset.addEventListener("click", function () {
         if (buttons.randomnessReset.disabled) return;
         syncPair("randomness", "randomnessRange", DEFAULTS.randomness);
+        onParameterChanged();
+    });
+    buttons.densityReset.addEventListener("click", function () {
+        if (buttons.densityReset.disabled) return;
+        syncPair("density", "densityRange", DEFAULTS.density);
         onParameterChanged();
     });
 

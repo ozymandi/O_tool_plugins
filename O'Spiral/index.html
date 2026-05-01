@@ -57,6 +57,25 @@
         </section>
 
         <section class="panel" data-lockable>
+            <h2>Density</h2>
+            <label class="field">
+                <span class="field-label">Points per loop</span>
+                <div class="slider-capsule">
+                    <input id="density" type="number" min="4" max="200" step="1" value="12">
+                    <div class="slider-track-area">
+                        <input id="densityRange" type="range" min="4" max="50" step="1" value="12">
+                    </div>
+                    <button id="densityResetBtn" class="slider-reset-btn" type="button" title="Reset to 12">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <p class="sub">Anchors per loop. Lower = smoother bezier (handles fill the gaps), higher = more anchor-faithful.</p>
+        </section>
+
+        <section class="panel" data-lockable>
             <h2>Direction</h2>
             <div class="seg-row seg-row--2" role="group" aria-label="Direction">
                 <button class="seg" type="button" data-direction="cw">CW</button>
