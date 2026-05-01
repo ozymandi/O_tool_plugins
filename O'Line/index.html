@@ -46,6 +46,20 @@
                 </div>
             </label>
             <label class="field">
+                <span class="field-label">Tension randomness</span>
+                <div class="slider-capsule">
+                    <input id="tensionRandomness" type="number" min="0" max="100" step="1" value="0">
+                    <div class="slider-track-area">
+                        <input id="tensionRandomnessRange" type="range" min="0" max="100" step="1" value="0">
+                    </div>
+                    <button id="tensionRandomnessResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
                 <span class="field-label">Stroke width (pt)</span>
                 <input id="strokeWidth" type="number" min="0.1" max="20" step="0.1" value="0.5">
             </label>

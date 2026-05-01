@@ -33,6 +33,7 @@
         topology: "nearest",
         bezier: false,
         tension: 30,
+        tensionRandomness: 0,
         strokeWidth: 0.5,
         take: 2,
         skip: 0,
@@ -41,6 +42,7 @@
 
     var SLIDER_PAIRS = [
         ["tension", "tensionRange"],
+        ["tensionRandomness", "tensionRandomnessRange"],
         ["take", "takeRange"],
         ["skip", "skipRange"],
         ["distance", "distanceRange"]
@@ -61,6 +63,8 @@
         bezier: document.getElementById("bezier"),
         tension: document.getElementById("tension"),
         tensionRange: document.getElementById("tensionRange"),
+        tensionRandomness: document.getElementById("tensionRandomness"),
+        tensionRandomnessRange: document.getElementById("tensionRandomnessRange"),
         strokeWidth: document.getElementById("strokeWidth"),
         take: document.getElementById("take"),
         takeRange: document.getElementById("takeRange"),
@@ -77,6 +81,7 @@
         reset: document.getElementById("resetBtn"),
         newSeed: document.getElementById("newSeedBtn"),
         tensionReset: document.getElementById("tensionResetBtn"),
+        tensionRandomnessReset: document.getElementById("tensionRandomnessResetBtn"),
         takeReset: document.getElementById("takeResetBtn"),
         skipReset: document.getElementById("skipResetBtn"),
         distanceReset: document.getElementById("distanceResetBtn")
@@ -123,6 +128,9 @@
         fields.tension.disabled = !enabled || !state.active || state.busy;
         fields.tensionRange.disabled = !enabled || !state.active || state.busy;
         buttons.tensionReset.disabled = !enabled || !state.active || state.busy;
+        fields.tensionRandomness.disabled = !enabled || !state.active || state.busy;
+        fields.tensionRandomnessRange.disabled = !enabled || !state.active || state.busy;
+        buttons.tensionRandomnessReset.disabled = !enabled || !state.active || state.busy;
     }
 
     function refreshControlStates() {
@@ -265,6 +273,7 @@
             topology: state.topology,
             bezier: !!fields.bezier.checked,
             tension: fields.tension.value,
+            tensionRandomness: fields.tensionRandomness.value,
             strokeWidth: fields.strokeWidth.value,
             take: fields.take.value,
             skip: fields.skip.value,
@@ -373,6 +382,9 @@
         var bezier = !!fields.bezier.checked;
         var tension = parseFloat(fields.tension.value);
         if (!Number.isFinite(tension)) tension = DEFAULTS.tension;
+        var tensionRandomness = parseFloat(fields.tensionRandomness.value);
+        if (!Number.isFinite(tensionRandomness) || tensionRandomness < 0) tensionRandomness = 0;
+        if (tensionRandomness > 100) tensionRandomness = 100;
         var strokeWidth = parseFloat(fields.strokeWidth.value);
         if (!Number.isFinite(strokeWidth) || strokeWidth <= 0) strokeWidth = DEFAULTS.strokeWidth;
         var take = parseInt(fields.take.value, 10);
@@ -385,6 +397,7 @@
             topology: topology,
             bezier: bezier,
             tension: tension,
+            tensionRandomness: tensionRandomness,
             strokeWidth: strokeWidth,
             take: take,
             skip: skip,
@@ -724,6 +737,11 @@
     buttons.tensionReset.addEventListener("click", function () {
         if (buttons.tensionReset.disabled) return;
         syncPair("tension", "tensionRange", DEFAULTS.tension);
+        onParameterChanged();
+    });
+    buttons.tensionRandomnessReset.addEventListener("click", function () {
+        if (buttons.tensionRandomnessReset.disabled) return;
+        syncPair("tensionRandomness", "tensionRandomnessRange", DEFAULTS.tensionRandomness);
         onParameterChanged();
     });
     buttons.takeReset.addEventListener("click", function () {

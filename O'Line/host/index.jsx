@@ -10,7 +10,9 @@ var olineSession = {
     previewGroup: null,    // GroupItem ref or null
     randomSeed: [],        // randomSeed[i][k] = target index for point i, take slot k
     seedTake: 0,           // current take size used for seed matrix
-    seedN: 0               // current points count for seed matrix
+    seedN: 0,              // current points count for seed matrix
+    tensionPool: [],       // per-edge tension random factors in [-1, 1]
+    tensionPoolKey: null   // cache key for the pool — re-rolled when this changes
 };
 
 var OLINE_PREVIEW_NAME = "OLine_Preview";
@@ -101,6 +103,7 @@ function olineValidateConfig(config) {
         topology: topology,
         bezier: olineNormalizeBoolean(config.bezier, false),
         tension: olineNormalizeNumber(config.tension, 30),
+        tensionRandomness: olineNormalizeNumber(config.tensionRandomness, 0),
         strokeWidth: olineNormalizeNumber(config.strokeWidth, 0.5),
         take: olineNormalizeInteger(config.take, 2),
         skip: olineNormalizeInteger(config.skip, 0),
@@ -110,6 +113,8 @@ function olineValidateConfig(config) {
     if (n.skip < 0) n.skip = 0;
     if (n.distance < 0) n.distance = 0;
     if (n.strokeWidth <= 0) n.strokeWidth = 0.1;
+    if (n.tensionRandomness < 0) n.tensionRandomness = 0;
+    if (n.tensionRandomness > 100) n.tensionRandomness = 100;
     return n;
 }
 
@@ -218,6 +223,24 @@ function olineEnsureSeed(n, take) {
         olineSession.seedTake = take;
     }
     return matrix;
+}
+
+// Tension random pool: array of factors in [-1, 1], one per edge.
+// Re-rolled only when the cache key changes (see olineRedrawPreview).
+function olineEnsureTensionPool(neededCount, key) {
+    if (olineSession.tensionPoolKey !== key) {
+        var pool = [];
+        for (var i = 0; i < neededCount; i++) pool.push(Math.random() * 2 - 1);
+        olineSession.tensionPool = pool;
+        olineSession.tensionPoolKey = key;
+        return pool;
+    }
+    if (neededCount > olineSession.tensionPool.length) {
+        for (var j = olineSession.tensionPool.length; j < neededCount; j++) {
+            olineSession.tensionPool.push(Math.random() * 2 - 1);
+        }
+    }
+    return olineSession.tensionPool;
 }
 
 function olineForceReseed(n, take) {
@@ -573,9 +596,16 @@ function olineRedrawPreview(config) {
     var edges = olineBuildEdges(config.topology, points, config);
     var center = (config.topology === "radial") ? olineCentroid(points) : null;
 
+    // Tension random pool: per-edge factor in [-1, 1]. Re-rolled only when the user
+    // changes the Tension randomness slider; topology / tension / other parameters
+    // reuse the same pool so dragging them does not re-shuffle the pattern.
+    var poolKey = "r=" + config.tensionRandomness;
+    var tensionPool = olineEnsureTensionPool(edges.length + 16, poolKey);
+
     // Dedupe by coordinate-pair key (handles overlapping edges from different algorithms)
     var seen = {};
     var drawn = 0;
+    var edgeDrawIdx = 0;
     for (var i = 0; i < edges.length; i++) {
         var e = edges[i];
         var pa = (e[0] === -1) ? center : points[e[0]];
@@ -585,8 +615,12 @@ function olineRedrawPreview(config) {
         var keyR = Math.round(pb[0]) + "_" + Math.round(pb[1]) + "|" + Math.round(pa[0]) + "_" + Math.round(pa[1]);
         if (seen[key] || seen[keyR]) continue;
         seen[key] = true;
+        // Per-line tension: base + random factor * randomness * 4 (so randomness=100 → ±400)
+        var lineFactor = tensionPool[edgeDrawIdx % tensionPool.length];
+        edgeDrawIdx++;
+        var lineTension = config.tension + lineFactor * config.tensionRandomness * 4;
         try {
-            olineDrawConnection(pa, pb, olineSession.previewGroup, config.bezier, config.tension, config.strokeWidth);
+            olineDrawConnection(pa, pb, olineSession.previewGroup, config.bezier, lineTension, config.strokeWidth);
             drawn++;
         } catch (drawErr) {
             olineLog("Draw error on edge " + i + ": " + drawErr.message);
@@ -610,6 +644,8 @@ function olineStart(encodedConfig) {
             olineSession.randomSeed = [];
             olineSession.seedN = 0;
             olineSession.seedTake = 0;
+            olineSession.tensionPool = [];
+            olineSession.tensionPoolKey = null;
         }
 
         var config = olineValidateConfig(olineParseConfig(encodedConfig));
@@ -631,6 +667,8 @@ function olineStart(encodedConfig) {
         olineSession.randomSeed = [];
         olineSession.seedN = 0;
         olineSession.seedTake = 0;
+            olineSession.tensionPool = [];
+            olineSession.tensionPoolKey = null;
         olineSession.active = true;
 
         var drawn = olineRedrawPreview(config);
@@ -651,6 +689,8 @@ function olineStart(encodedConfig) {
         olineSession.randomSeed = [];
         olineSession.seedN = 0;
         olineSession.seedTake = 0;
+            olineSession.tensionPool = [];
+            olineSession.tensionPoolKey = null;
         return olineResponse(false, error.message || String(error));
     }
 }
@@ -721,6 +761,8 @@ function olineApply() {
         olineSession.randomSeed = [];
         olineSession.seedN = 0;
         olineSession.seedTake = 0;
+            olineSession.tensionPool = [];
+            olineSession.tensionPoolKey = null;
         app.redraw();
         return olineResponse(true, "Applied " + n + " edge(s).", { edges: n });
     } catch (error) {
@@ -741,6 +783,8 @@ function olineCancel() {
         olineSession.randomSeed = [];
         olineSession.seedN = 0;
         olineSession.seedTake = 0;
+            olineSession.tensionPool = [];
+            olineSession.tensionPoolKey = null;
         app.redraw();
         return olineResponse(true, "Cancelled.", { wasActive: true });
     } catch (error) {
