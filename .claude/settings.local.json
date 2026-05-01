@@ -4,7 +4,8 @@
       "PowerShell(powershell -ExecutionPolicy Bypass -File \"E:\\\\Projects\\\\Illustrator\\\\Plugins\\\\O'Line\\\\install.ps1\")",
       "Bash(git add *)",
       "Bash(git -c user.email=ozymandiuz@gmail.com -c user.name=ozymandi commit -m 'feat\\(O'\\\\''Line\\): per-line Tension randomness slider *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git -c user.email=ozymandiuz@gmail.com -c user.name=ozymandi commit -m 'fix\\(O'\\\\''Line\\): respect [hidden] on .panel *)"
     ]
   }
 }

@@ -104,6 +104,7 @@ body.is-active button[data-show-active] { display: block; }
 
 .field { display: grid; gap: 4px; min-width: 0; }
 .field[hidden] { display: none; }
+.panel[hidden] { display: none; }
 
 .field-label, .sub, .status, .footer-note, .check span {
     color: var(--muted);
