@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Fill</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body class="is-idle">
+    <main class="app">
+        <section class="panel" data-lockable data-show-active>
+            <h2>Shape &amp; Donors</h2>
+            <div class="shape-bar">
+                <span class="shape-bar-label">Shape:</span>
+                <span id="shapeName" class="shape-name">—</span>
+                <button id="changeShapeBtn" class="link-btn" type="button">Change</button>
+            </div>
+            <div id="stackList" class="stack-list"></div>
+            <button id="addToStackBtn" class="action-btn" type="button">+ ADD TO STACK</button>
+            <p class="sub">Order matters in gradient modes (Bottom Up etc). Drag rows to reorder, click ✕ to remove.</p>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Geometry</h2>
+            <label class="field">
+                <span class="field-label">Fill amount (%)</span>
+                <div class="slider-capsule">
+                    <input id="percent" type="number" min="1" max="100" step="1" value="100">
+                    <div class="slider-track-area">
+                        <input id="percentRange" type="range" min="1" max="100" step="1" value="100">
+                    </div>
+                    <button id="percentResetBtn" class="slider-reset-btn" type="button" title="Reset to 100">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+
+            <label class="field">
+                <span class="field-label">Gap (px)</span>
+                <div class="slider-capsule">
+                    <input id="gap" type="number" min="0" max="1000" step="1" value="0">
+                    <div class="slider-track-area">
+                        <input id="gapRange" type="range" min="0" max="200" step="1" value="0">
+                    </div>
+                    <button id="gapResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+
+            <label class="field">
+                <span class="field-label">Attempts (k)</span>
+                <div class="slider-capsule">
+                    <input id="attempts" type="number" min="1" max="500" step="1" value="30">
+                    <div class="slider-track-area">
+                        <input id="attemptsRange" type="range" min="5" max="100" step="1" value="30">
+                    </div>
+                    <button id="attemptsResetBtn" class="slider-reset-btn" type="button" title="Reset to 30">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Scale</h2>
+            <div class="row-two">
+                <label class="field">
+                    <span class="field-label">Min %</span>
+                    <input id="minScale" type="number" min="1" max="500" step="1" value="20">
+                </label>
+                <label class="field">
+                    <span class="field-label">Max %</span>
+                    <input id="maxScale" type="number" min="1" max="1000" step="1" value="120">
+                </label>
+            </div>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Logic</h2>
+            <div class="field">
+                <span class="field-label">Origin</span>
+                <div class="seg-grid" role="group" aria-label="Fill origin">
+                    <button class="seg" type="button" data-origin="bottom-up">BOTTOM UP</button>
+                    <button class="seg" type="button" data-origin="top-down">TOP DOWN</button>
+                    <button class="seg" type="button" data-origin="left-right">LEFT &rarr; RIGHT</button>
+                    <button class="seg" type="button" data-origin="right-left">RIGHT &rarr; LEFT</button>
+                </div>
+                <input id="origin" type="hidden" value="bottom-up">
+            </div>
+            <label class="check">
+                <input id="mix" type="checkbox">
+                <span>MIX mode (shuffle all donors instead of gradient)</span>
+            </label>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Output</h2>
+            <div class="check-row">
+                <label class="check">
+                    <input id="rotate" type="checkbox" checked>
+                    <span>Random rotation</span>
+                </label>
+                <label class="check">
+                    <input id="mask" type="checkbox" checked>
+                    <span>Clipping mask</span>
+                </label>
+            </div>
+        </section>
+
+        <section class="panel">
+            <button id="primaryBtn" class="primary action-btn" type="button">SELECT SHAPE</button>
+            <div class="action-row" data-show-active>
+                <button id="applyBtn" class="action-btn" type="button" disabled>APPLY</button>
+                <button id="cancelBtn" class="action-btn" type="button" disabled>CANCEL</button>
+            </div>
+            <button id="resetBtn" class="action-btn" type="button" disabled>RESET PARAMETERS</button>
+            <p class="sub" id="actionHint">Select a shape on the artboard and press SELECT SHAPE to start.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">Donors get converted to Symbols on Add. Container can be a closed PathItem (uses real polygon) or any other item (uses bounding box).</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>

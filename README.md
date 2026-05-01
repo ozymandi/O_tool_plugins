@@ -39,7 +39,7 @@ PluginName/
 - [x] O'Bend
 - [x] O'Bevel
 - [x] O'Color
-- [ ] O'Fill
+- [x] O'Fill
 - [ ] O'Cone
 - [ ] O'Spiral
 - [ ] O'Line
