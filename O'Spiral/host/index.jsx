@@ -8,7 +8,9 @@ var ospiralSession = {
     active: false,
     keys: [],            // sorted [{x, y, w, h}, ...]
     strokeColor: null,
-    previewPath: null
+    previewPath: null,
+    loopNoises: null,    // noise array: only re-rolled when randomness changes
+    lastRandomness: null
 };
 
 function ospiralLog(message) {
@@ -132,25 +134,40 @@ function ospiralSpline(p0, p1, p2, p3, t) {
     return (2 * p1 - 2 * p2 + v0 + v1) * t3 + (-3 * p1 + 3 * p2 - 2 * v0 - v1) * t2 + v0 * t + p1;
 }
 
-function ospiralComputePoints(keys, mode, loops, randomness, density, tension, direction) {
-    var dir = direction === "ccw" ? -1 : 1;
-    var noiseFactor = randomness / 10;
-    var numSegments = keys.length - 1;
-    var totalLoops;
-    if (mode === "per-segment") {
-        totalLoops = loops * numSegments;
-    } else {
-        totalLoops = loops;
-    }
+function ospiralComputeTotalLoops(mode, loops, numSegments) {
+    var totalLoops = mode === "per-segment" ? loops * numSegments : loops;
     if (totalLoops < 1) totalLoops = 1;
+    return totalLoops;
+}
+
+// Ensures the cached loopNoises array is sized for the current totalLoops and matches
+// the current randomness. Re-rolls the whole array only when randomness changes;
+// extends with fresh values when more loops are needed but randomness held.
+function ospiralEnsureNoise(totalLoops, randomness) {
+    var needLen = Math.ceil(totalLoops) + 3;
+    var noiseFactor = randomness / 10;
+    if (ospiralSession.loopNoises === null || ospiralSession.lastRandomness !== randomness) {
+        var arr = [];
+        for (var i = 0; i < needLen; i++) {
+            arr.push(1 + (Math.random() - 0.5) * noiseFactor);
+        }
+        ospiralSession.loopNoises = arr;
+        ospiralSession.lastRandomness = randomness;
+    } else if (ospiralSession.loopNoises.length < needLen) {
+        var existing = ospiralSession.loopNoises;
+        for (var j = existing.length; j < needLen; j++) {
+            existing.push(1 + (Math.random() - 0.5) * noiseFactor);
+        }
+    }
+    return ospiralSession.loopNoises;
+}
+
+function ospiralComputePoints(keys, mode, loops, randomness, density, tension, direction, loopNoises) {
+    var dir = direction === "ccw" ? -1 : 1;
+    var numSegments = keys.length - 1;
+    var totalLoops = ospiralComputeTotalLoops(mode, loops, numSegments);
 
     var fullKeys = [keys[0]].concat(keys).concat([keys[keys.length - 1]]);
-
-    var loopCount = Math.ceil(totalLoops) + 2;
-    var loopNoises = [];
-    for (var n = 0; n <= loopCount; n++) {
-        loopNoises.push(1 + (Math.random() - 0.5) * noiseFactor);
-    }
 
     var pointsPerLoop = density;
     if (pointsPerLoop < 4) pointsPerLoop = 4;
@@ -306,13 +323,20 @@ function ospiralStart(encodedConfig) {
         for (var i = 0; i < sortedItems.length; i++) keys.push(ospiralGetData(sortedItems[i]));
 
         var strokeColor = ospiralResolveStrokeColor(sortedItems[0]);
-        var pts = ospiralComputePoints(keys, config.mode, config.loops, config.randomness, config.density, config.tension, config.direction);
 
-        var path = ospiralCreatePath(doc, strokeColor, pts);
-
+        // Initialise session before computing so noise cache lands in the right place.
         ospiralSession.active = true;
         ospiralSession.keys = keys;
         ospiralSession.strokeColor = strokeColor;
+        ospiralSession.previewPath = null;
+        ospiralSession.loopNoises = null;
+        ospiralSession.lastRandomness = null;
+
+        var totalLoops = ospiralComputeTotalLoops(config.mode, config.loops, keys.length - 1);
+        var noises = ospiralEnsureNoise(totalLoops, config.randomness);
+        var pts = ospiralComputePoints(keys, config.mode, config.loops, config.randomness, config.density, config.tension, config.direction, noises);
+
+        var path = ospiralCreatePath(doc, strokeColor, pts);
         ospiralSession.previewPath = path;
 
         app.redraw();
@@ -327,6 +351,8 @@ function ospiralStart(encodedConfig) {
         ospiralSession.keys = [];
         ospiralSession.strokeColor = null;
         ospiralSession.previewPath = null;
+        ospiralSession.loopNoises = null;
+        ospiralSession.lastRandomness = null;
         return ospiralResponse(false, error.message || String(error));
     }
 }
@@ -337,7 +363,9 @@ function ospiralUpdate(encodedConfig) {
             return ospiralResponse(false, "No active session.");
         }
         var config = ospiralValidateConfig(ospiralParseConfig(encodedConfig));
-        var pts = ospiralComputePoints(ospiralSession.keys, config.mode, config.loops, config.randomness, config.density, config.tension, config.direction);
+        var totalLoops = ospiralComputeTotalLoops(config.mode, config.loops, ospiralSession.keys.length - 1);
+        var noises = ospiralEnsureNoise(totalLoops, config.randomness);
+        var pts = ospiralComputePoints(ospiralSession.keys, config.mode, config.loops, config.randomness, config.density, config.tension, config.direction, noises);
         ospiralWritePathPoints(ospiralSession.previewPath, pts);
         app.redraw();
         return ospiralResponse(true, "Spiral updated.", { anchors: pts.length });
@@ -357,6 +385,8 @@ function ospiralApply() {
         ospiralSession.keys = [];
         ospiralSession.strokeColor = null;
         ospiralSession.previewPath = null;
+        ospiralSession.loopNoises = null;
+        ospiralSession.lastRandomness = null;
         app.redraw();
         return ospiralResponse(true, "Spiral applied.");
     } catch (error) {
@@ -377,6 +407,8 @@ function ospiralCancel() {
         ospiralSession.keys = [];
         ospiralSession.strokeColor = null;
         ospiralSession.previewPath = null;
+        ospiralSession.loopNoises = null;
+        ospiralSession.lastRandomness = null;
         app.redraw();
         return ospiralResponse(true, "Cancelled.", { wasActive: true });
     } catch (error) {
