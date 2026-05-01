@@ -9,7 +9,7 @@
 </head>
 <body>
     <main class="app">
-        <section class="panel">
+        <section class="panel" data-lockable>
             <h2>Mode</h2>
             <div class="seg-row seg-row--2" role="group" aria-label="Mode">
                 <button class="seg" type="button" data-mode="steps">STEPS</button>
@@ -18,7 +18,7 @@
             <input id="mode" type="hidden" value="steps">
         </section>
 
-        <section class="panel" data-show-when="mode-steps">
+        <section class="panel" data-show-when="mode-steps" data-lockable>
             <h2>Steps</h2>
             <label class="field">
                 <span class="field-label">Count</span>
@@ -37,7 +37,7 @@
             <p class="sub">Number of stair-step segments to insert at each corner.</p>
         </section>
 
-        <section class="panel" data-show-when="mode-custom">
+        <section class="panel" data-show-when="mode-custom" data-lockable>
             <h2>Custom Profile</h2>
             <button id="loadClipboardBtn" class="action-btn" type="button">LOAD CLIPBOARD</button>
             <p id="profileStatus" class="sub">Profile: empty.</p>
@@ -54,7 +54,7 @@
             <p class="sub">Copy a path (Ctrl+C) in Illustrator, then click LOAD CLIPBOARD. The path geometry becomes the bevel profile.</p>
         </section>
 
-        <section class="panel">
+        <section class="panel" data-lockable>
             <h2>Radius</h2>
             <label class="field">
                 <span class="field-label">Radius (px)</span>
@@ -74,16 +74,12 @@
         </section>
 
         <section class="panel">
-            <label class="check">
-                <input id="livePreview" type="checkbox">
-                <span>Live Preview</span>
-            </label>
             <div class="action-row">
-                <button id="applyBtn" class="primary action-btn" type="button">APPLY</button>
+                <button id="actionBtn" class="primary action-btn" type="button">BEVEL</button>
                 <button id="cancelBtn" class="action-btn" type="button" disabled>CANCEL</button>
             </div>
-            <button id="resetBtn" class="action-btn" type="button">RESET PARAMETERS</button>
-            <p class="sub">Live Preview captures the current selection and updates as parameters change. APPLY commits the preview, CANCEL reverts.</p>
+            <button id="resetBtn" class="action-btn" type="button" disabled>RESET PARAMETERS</button>
+            <p class="sub" id="actionHint">Select an object, then press BEVEL. The preview applies in STEPS mode and parameters unlock for live editing. APPLY commits, CANCEL reverts.</p>
         </section>
 
         <section class="panel">

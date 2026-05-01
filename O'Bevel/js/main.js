@@ -2,8 +2,8 @@
     var STORAGE_KEY = "obevel.panel.settings.v1";
 
     var state = {
+        editing: false,
         busy: false,
-        previewActive: false,
         previewPending: null,
         previewQueued: false,
         profileLoaded: false,
@@ -17,12 +17,11 @@
         radius: document.getElementById("radius"),
         radiusRange: document.getElementById("radiusRange"),
         flip: document.getElementById("flip"),
-        straighten: document.getElementById("straighten"),
-        livePreview: document.getElementById("livePreview")
+        straighten: document.getElementById("straighten")
     };
 
     var buttons = {
-        apply: document.getElementById("applyBtn"),
+        action: document.getElementById("actionBtn"),
         cancel: document.getElementById("cancelBtn"),
         reset: document.getElementById("resetBtn"),
         loadClipboard: document.getElementById("loadClipboardBtn"),
@@ -57,16 +56,6 @@
         try { window.localStorage.setItem(STORAGE_KEY, value); } catch (e) {}
     }
 
-    function setBusy(isBusy) {
-        Object.keys(buttons).forEach(function (key) {
-            if (buttons[key]) buttons[key].disabled = isBusy;
-        });
-        if (!isBusy) {
-            buttons.cancel.disabled = !state.previewActive;
-        }
-        state.busy = isBusy;
-    }
-
     function setStatus(kind, message) {
         statusEl.textContent = message;
         statusEl.title = message;
@@ -75,9 +64,32 @@
 
     function setProfileStatus(text) { profileStatusEl.textContent = text; }
 
-    function updatePreviewControls() {
-        buttons.cancel.disabled = !state.previewActive || state.busy;
-        buttons.apply.textContent = state.previewActive ? "APPLY PREVIEW" : "APPLY";
+    function refreshControlStates() {
+        var idle = !state.editing;
+        var busy = state.busy;
+        var locked = idle || busy;
+
+        // Lock all interactive elements inside lockable panels (Mode, Steps, Custom, Radius)
+        var lockableInputs = document.querySelectorAll('.panel[data-lockable] input, .panel[data-lockable] button');
+        Array.prototype.forEach.call(lockableInputs, function (el) {
+            el.disabled = locked;
+        });
+
+        // Action button: always clickable unless busy. Label flips between BEVEL/APPLY.
+        buttons.action.disabled = busy;
+        buttons.action.textContent = state.editing ? "APPLY" : "BEVEL";
+
+        // Cancel and Reset only meaningful while editing.
+        buttons.cancel.disabled = locked;
+        buttons.reset.disabled = locked;
+
+        document.body.classList.toggle("is-idle", idle);
+        document.body.classList.toggle("is-editing", !idle);
+    }
+
+    function setBusy(isBusy) {
+        state.busy = isBusy;
+        refreshControlStates();
     }
 
     function getCepApi() {
@@ -219,26 +231,8 @@
         return evalHost(script).then(parseHostResponse);
     }
 
-    async function runHostAction(label, hostFunction, config) {
-        saveSettings();
-        setBusy(true);
-        setStatus("info", label + "...");
-        try {
-            var response = await callHost(hostFunction, config);
-            if (!response.ok) throw new Error(response.message || "Illustrator returned an error.");
-            setStatus("success", response.message || (label + " complete."));
-            return response;
-        } catch (error) {
-            setStatus("error", error.message);
-            return null;
-        } finally {
-            setBusy(false);
-            updatePreviewControls();
-        }
-    }
-
     function sendPreviewUpdate() {
-        if (!state.previewActive) return Promise.resolve(null);
+        if (!state.editing) return Promise.resolve(null);
         if (state.previewPending) {
             state.previewQueued = true;
             return state.previewPending;
@@ -249,9 +243,8 @@
                 if (!response.ok) {
                     setStatus("error", response.message || "Preview update failed.");
                     if (response.message && response.message.indexOf("No active") !== -1) {
-                        state.previewActive = false;
-                        fields.livePreview.checked = false;
-                        updatePreviewControls();
+                        state.editing = false;
+                        refreshControlStates();
                     }
                 }
                 return response;
@@ -261,7 +254,7 @@
             })
             .finally(function () {
                 state.previewPending = null;
-                if (state.previewQueued && state.previewActive) {
+                if (state.previewQueued && state.editing) {
                     state.previewQueued = false;
                     sendPreviewUpdate();
                 }
@@ -270,85 +263,88 @@
     }
 
     function schedulePreviewUpdate() {
-        if (!state.previewActive) return;
+        if (!state.editing) return;
         sendPreviewUpdate();
     }
 
-    async function startLivePreview() {
-        if (state.busy) return false;
-        var config = collectConfig();
-        if (config.mode === "custom" && !state.profileLoaded) {
-            setStatus("error", "Load a clipboard profile first.");
-            return false;
-        }
+    async function startBevel() {
+        if (state.busy || state.editing) return;
+
+        // Force STEPS mode on every new session for predictable starts.
+        fields.mode.value = "steps";
+        updateModeButtons();
         saveSettings();
+
+        var config = collectConfig();
         setBusy(true);
-        setStatus("info", "Starting preview...");
+        setStatus("info", "Starting bevel...");
         try {
             var response = await callHost("obevelStartPreview", config);
-            if (!response.ok) throw new Error(response.message || "Could not start preview.");
-            state.previewActive = true;
-            setStatus("success", response.message || "Preview started.");
-            return true;
-        } catch (error) {
-            setStatus("error", error.message);
-            return false;
-        } finally {
-            setBusy(false);
-            updatePreviewControls();
-        }
-    }
-
-    async function cancelLivePreview() {
-        if (state.busy) return;
-        state.previewQueued = false;
-        if (state.previewPending) {
-            try { await state.previewPending; } catch (e) {}
-        }
-        setBusy(true);
-        setStatus("info", "Cancelling preview...");
-        try {
-            var response = await callHost("obevelCancelPreview");
-            if (!response.ok) throw new Error(response.message || "Cancel failed.");
-            state.previewActive = false;
-            setStatus("info", response.message || "Preview cancelled.");
+            if (!response.ok) throw new Error(response.message || "Could not start.");
+            state.editing = true;
+            setStatus("success", "Bevel started. Adjust parameters, then APPLY.");
         } catch (error) {
             setStatus("error", error.message);
         } finally {
             setBusy(false);
-            updatePreviewControls();
+            refreshControlStates();
         }
     }
 
-    async function applyLivePreview() {
-        if (state.busy) return;
+    async function applyBevel() {
+        if (state.busy || !state.editing) return;
+
         if (state.previewPending) {
             try { await state.previewPending; } catch (e) {}
         }
-        if (state.previewQueued && state.previewActive) {
+        if (state.previewQueued && state.editing) {
             state.previewQueued = false;
             await sendPreviewUpdate();
             if (state.previewPending) {
                 try { await state.previewPending; } catch (e) {}
             }
         }
+
         setBusy(true);
-        setStatus("info", "Applying preview...");
+        setStatus("info", "Applying...");
         try {
             var response = await callHost("obevelApplyPreview");
             if (!response.ok) throw new Error(response.message || "Apply failed.");
-            state.previewActive = false;
-            setStatus("success", response.message || "Bevel applied.");
+            state.editing = false;
+            setStatus("success", response.message || "Bevel applied. Select another object to start again.");
         } catch (error) {
             setStatus("error", error.message);
         } finally {
             setBusy(false);
-            updatePreviewControls();
+            refreshControlStates();
+        }
+    }
+
+    async function cancelBevel() {
+        if (state.busy || !state.editing) return;
+
+        state.previewQueued = false;
+        if (state.previewPending) {
+            try { await state.previewPending; } catch (e) {}
+        }
+
+        setBusy(true);
+        setStatus("info", "Cancelling...");
+        try {
+            var response = await callHost("obevelCancelPreview");
+            if (!response.ok) throw new Error(response.message || "Cancel failed.");
+            state.editing = false;
+            setStatus("info", response.message || "Cancelled. Select an object to start again.");
+        } catch (error) {
+            setStatus("error", error.message);
+        } finally {
+            setBusy(false);
+            refreshControlStates();
         }
     }
 
     async function loadClipboard() {
-        if (state.busy) return;
+        if (state.busy || !state.editing) return;
         setBusy(true);
         setStatus("info", "Reading clipboard...");
         try {
@@ -358,14 +354,14 @@
             state.profilePoints = response.points || 0;
             setProfileStatus("Profile: " + state.profilePoints + " points loaded.");
             setStatus("success", response.message || "Profile loaded.");
-            if (state.previewActive) schedulePreviewUpdate();
+            schedulePreviewUpdate();
         } catch (error) {
             state.profileLoaded = false;
             setProfileStatus("Profile: " + error.message);
             setStatus("error", error.message);
         } finally {
             setBusy(false);
-            updatePreviewControls();
+            refreshControlStates();
         }
     }
 
@@ -373,17 +369,17 @@
         try {
             var handshake = await callHost("obevelHandshake");
             if (!handshake.ok) throw new Error(handshake.message || "Could not connect to Illustrator.");
+            // Always start clean: cancel any stale session left in the host.
             if (handshake.previewActive) {
                 try { await callHost("obevelCancelPreview"); } catch (e) {}
             }
-            state.previewActive = false;
-            fields.livePreview.checked = false;
+            state.editing = false;
             if (handshake.profileLoaded) {
                 state.profileLoaded = true;
                 state.profilePoints = handshake.profilePoints || 0;
                 setProfileStatus("Profile: " + state.profilePoints + " points loaded.");
             }
-            updatePreviewControls();
+            refreshControlStates();
             setStatus("success", handshake.message + " " + handshake.hostName + " " + handshake.hostVersion);
         } catch (error) {
             setStatus("error", error.message);
@@ -483,7 +479,7 @@
 
     function onParameterChanged() {
         saveSettings();
-        if (state.previewActive) schedulePreviewUpdate();
+        if (state.editing) schedulePreviewUpdate();
     }
 
     function bindSliderPair(numKey, rangeKey) {
@@ -491,12 +487,14 @@
         var rangeField = fields[rangeKey];
         if (rangeField) {
             rangeField.addEventListener("input", function () {
+                if (rangeField.disabled) return;
                 syncPair(numKey, rangeKey, rangeField.value);
                 onParameterChanged();
             });
         }
         if (numField) {
             numField.addEventListener("input", function () {
+                if (numField.disabled) return;
                 syncPair(numKey, rangeKey, numField.value);
                 onParameterChanged();
             });
@@ -506,6 +504,7 @@
     function bindModeButtons() {
         Array.prototype.forEach.call(document.querySelectorAll(".seg[data-mode]"), function (button) {
             button.addEventListener("click", function () {
+                if (button.disabled) return;
                 fields.mode.value = button.getAttribute("data-mode") || "steps";
                 updateModeButtons();
                 onParameterChanged();
@@ -515,7 +514,10 @@
 
     function bindCheckboxes() {
         ["flip", "straighten"].forEach(function (key) {
-            fields[key].addEventListener("change", onParameterChanged);
+            fields[key].addEventListener("change", function () {
+                if (fields[key].disabled) return;
+                onParameterChanged();
+            });
         });
     }
 
@@ -524,54 +526,43 @@
     bindCheckboxes();
 
     buttons.countReset.addEventListener("click", function () {
+        if (buttons.countReset.disabled) return;
         syncPair("count", "countRange", DEFAULTS.count);
         onParameterChanged();
     });
     buttons.radiusReset.addEventListener("click", function () {
+        if (buttons.radiusReset.disabled) return;
         syncPair("radius", "radiusRange", DEFAULTS.radius);
         onParameterChanged();
     });
 
-    buttons.loadClipboard.addEventListener("click", loadClipboard);
-
-    fields.livePreview.addEventListener("change", async function () {
-        if (fields.livePreview.checked) {
-            var ok = await startLivePreview();
-            if (!ok) fields.livePreview.checked = false;
-        } else {
-            await cancelLivePreview();
-        }
+    buttons.loadClipboard.addEventListener("click", function () {
+        if (buttons.loadClipboard.disabled) return;
+        loadClipboard();
     });
 
-    buttons.apply.addEventListener("click", async function () {
-        if (state.previewActive) {
-            await applyLivePreview();
-            fields.livePreview.checked = false;
-        } else {
-            var config = collectConfig();
-            if (config.mode === "custom" && !state.profileLoaded) {
-                setStatus("error", "Load a clipboard profile first.");
-                return;
-            }
-            await runHostAction("Bevelling selection", "obevelRun", config);
-        }
+    buttons.action.addEventListener("click", function () {
+        if (buttons.action.disabled) return;
+        if (state.editing) applyBevel();
+        else startBevel();
     });
 
-    buttons.cancel.addEventListener("click", async function () {
-        await cancelLivePreview();
-        fields.livePreview.checked = false;
+    buttons.cancel.addEventListener("click", function () {
+        if (buttons.cancel.disabled) return;
+        cancelBevel();
     });
 
     buttons.reset.addEventListener("click", function () {
+        if (buttons.reset.disabled) return;
         applySnapshot(getDefaultConfig());
         saveSettings();
         setStatus("info", "Parameters reset to defaults.");
-        if (state.previewActive) schedulePreviewUpdate();
+        if (state.editing) schedulePreviewUpdate();
     });
 
     restoreSettings();
     bindNumberWheel();
     bindNumericScrubbers();
-    updatePreviewControls();
+    refreshControlStates();
     initializePanel();
 })();
