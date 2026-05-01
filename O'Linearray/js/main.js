@@ -530,33 +530,71 @@
         drag.title = "Drag to reorder";
         row.appendChild(drag);
 
-        var select = document.createElement("select");
-        select.className = "stack-symbol";
-        var emptyOpt = document.createElement("option");
-        emptyOpt.value = "";
-        emptyOpt.textContent = "— empty —";
-        select.appendChild(emptyOpt);
-        for (var s = 0; s < state.docSymbols.length; s++) {
-            var opt = document.createElement("option");
-            opt.value = state.docSymbols[s];
-            opt.textContent = state.docSymbols[s];
-            select.appendChild(opt);
-        }
+        var dd = document.createElement("div");
+        dd.className = "simple-dropdown stack-symbol-dd";
+
+        var toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "stack-symbol-toggle ui-dropdown-toggle";
+        toggle.setAttribute("aria-haspopup", "listbox");
+        toggle.setAttribute("aria-expanded", "false");
         var current = slot && slot.symbolName ? slot.symbolName : "";
-        // If symbol no longer in doc list, append it as a stale option so user sees it
-        if (current && state.docSymbols.indexOf(current) === -1) {
-            var stale = document.createElement("option");
-            stale.value = current;
-            stale.textContent = current + " (missing)";
-            select.appendChild(stale);
+        var labelText = document.createElement("span");
+        labelText.className = "symbol-text";
+        labelText.textContent = current ? current : "— empty —";
+        toggle.appendChild(labelText);
+        var chev = document.createElement("span");
+        chev.className = "dropdown-chevron";
+        chev.setAttribute("aria-hidden", "true");
+        chev.innerHTML = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 6.5L8 10L11.5 6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
+        toggle.appendChild(chev);
+        if (!current) toggle.classList.add("is-empty");
+        dd.appendChild(toggle);
+
+        var list = document.createElement("div");
+        list.className = "stack-options ui-dropdown-list";
+        list.setAttribute("role", "listbox");
+
+        var staleNeeded = current && state.docSymbols.indexOf(current) === -1;
+
+        var emptyOpt = document.createElement("div");
+        emptyOpt.className = "stack-option is-empty" + (current ? "" : " is-selected");
+        emptyOpt.setAttribute("data-value", "");
+        emptyOpt.textContent = "— empty —";
+        list.appendChild(emptyOpt);
+
+        for (var s = 0; s < state.docSymbols.length; s++) {
+            var opt = document.createElement("div");
+            opt.className = "stack-option" + (state.docSymbols[s] === current ? " is-selected" : "");
+            opt.setAttribute("data-value", state.docSymbols[s]);
+            opt.textContent = state.docSymbols[s];
+            list.appendChild(opt);
         }
-        select.value = current;
-        if (!current) select.classList.add("is-empty");
-        select.addEventListener("change", function () {
-            var name = select.value || null;
-            handleAssignSymbol(index, name);
+        if (staleNeeded) {
+            var staleOpt = document.createElement("div");
+            staleOpt.className = "stack-option is-stale is-selected";
+            staleOpt.setAttribute("data-value", current);
+            staleOpt.textContent = current + " (missing)";
+            list.appendChild(staleOpt);
+        }
+
+        toggle.addEventListener("click", function (event) {
+            event.stopPropagation();
+            if (toggle.disabled) return;
+            if (state.activeDropdown === dd) closeDropdown();
+            else openDropdown(dd);
         });
-        row.appendChild(select);
+        Array.prototype.forEach.call(list.querySelectorAll(".stack-option"), function (option) {
+            option.addEventListener("click", function (event) {
+                event.stopPropagation();
+                var raw = option.getAttribute("data-value");
+                var name = (raw === "" || raw == null) ? null : raw;
+                closeDropdown();
+                handleAssignSymbol(index, name);
+            });
+        });
+        dd.appendChild(list);
+        row.appendChild(dd);
 
         var remove = document.createElement("button");
         remove.type = "button";
