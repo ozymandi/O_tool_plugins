@@ -133,8 +133,12 @@ body.is-active button[data-show-active] { display: block; }
 
 .action-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 8px;
+}
+
+body.is-active .action-row {
+    grid-template-columns: repeat(3, 1fr);
 }
 
 input[type="number"], input[type="text"], button, textarea {

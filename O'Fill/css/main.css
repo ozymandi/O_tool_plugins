@@ -120,8 +120,12 @@ body.is-active .action-row[data-show-active] { display: grid; }
 
 .action-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 8px;
+}
+
+body.is-active .action-row {
+    grid-template-columns: repeat(3, 1fr);
 }
 
 .check-row {

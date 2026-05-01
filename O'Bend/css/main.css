@@ -110,9 +110,16 @@ body.is-editing .panel[data-lockable] {
 
 .action-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 8px;
 }
+
+body.is-active .action-row {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+[data-show-active] { display: none; }
+body.is-active [data-show-active] { display: block; }
 
 .check {
     display: grid;
