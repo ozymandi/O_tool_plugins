@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Autoshape</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+    <main class="app">
+        <section class="panel">
+            <h2>Shape Types</h2>
+            <div class="checks-grid">
+                <label class="check"><input id="t_circle" type="checkbox" data-shape="Circle" checked><span>Circles</span></label>
+                <label class="check"><input id="t_polyline" type="checkbox" data-shape="Polyline" checked><span>Polylines</span></label>
+                <label class="check"><input id="t_ellipse" type="checkbox" data-shape="Ellipse" checked><span>Ellipses</span></label>
+                <label class="check"><input id="t_arc" type="checkbox" data-shape="Arc" checked><span>Arcs</span></label>
+                <label class="check"><input id="t_square" type="checkbox" data-shape="Square" checked><span>Squares</span></label>
+                <label class="check"><input id="t_hexagon" type="checkbox" data-shape="Hexagon" checked><span>Hexagons</span></label>
+                <label class="check"><input id="t_rect" type="checkbox" data-shape="Rectangle" checked><span>Rectangles</span></label>
+                <label class="check"><input id="t_star" type="checkbox" data-shape="Star" checked><span>Stars</span></label>
+                <label class="check"><input id="t_rounded" type="checkbox" data-shape="RoundedRectangle" checked><span>Rounded rects</span></label>
+                <label class="check"><input id="t_polygon" type="checkbox" data-shape="Polygon" checked><span>Other polygons</span></label>
+                <label class="check"><input id="t_triangle" type="checkbox" data-shape="Triangle" checked><span>Triangles</span></label>
+                <label class="check"><input id="t_polargrid" type="checkbox" data-shape="PolarGrid"><span>Polar grid</span></label>
+                <label class="check"><input id="t_line" type="checkbox" data-shape="Line" checked><span>Straight lines</span></label>
+                <label class="check"><input id="t_rectgrid" type="checkbox" data-shape="RectangularGrid"><span>Rectangular grid</span></label>
+            </div>
+            <button id="toggleAllBtn" class="toggle-all-btn" type="button">DESELECT ALL</button>
+            <p class="sub">When all are on, the script auto-detects each path's best shape. Enable a single type to force-convert every selection into it.</p>
+        </section>
+
+        <section class="panel">
+            <h2>Grid Settings</h2>
+            <div class="grid-line">
+                <span class="grid-line-label">Rect</span>
+                <div class="grid-line-cell">
+                    <label class="check"><input id="g_rectRowsEn" type="checkbox" checked><span>Rows</span></label>
+                    <input id="g_rectRows" type="number" min="1" max="200" step="1" value="5">
+                </div>
+                <div class="grid-line-cell">
+                    <label class="check"><input id="g_rectColsEn" type="checkbox" checked><span>Cols</span></label>
+                    <input id="g_rectCols" type="number" min="1" max="200" step="1" value="5">
+                </div>
+            </div>
+            <div class="grid-line">
+                <span class="grid-line-label">Polar</span>
+                <div class="grid-line-cell">
+                    <span class="grid-cell-label">Rings</span>
+                    <input id="g_polarRings" type="number" min="1" max="100" step="1" value="5">
+                </div>
+                <div class="grid-line-cell">
+                    <span class="grid-cell-label">Rays</span>
+                    <input id="g_polarRays" type="number" min="1" max="100" step="1" value="6">
+                </div>
+            </div>
+            <p class="sub">If only Rows is on (or only Cols), the other dimension auto-fits to keep cells square.</p>
+        </section>
+
+        <section class="panel">
+            <button id="processBtn" class="primary action-btn" type="button">PROCESS</button>
+            <button id="copyBtn" class="action-btn" type="button">PROCESS AS COPY</button>
+            <p class="sub">PROCESS replaces each selected sketch path with its detected shape. PROCESS AS COPY keeps the originals and places the new shape behind.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">Select hand-drawn paths in Illustrator. Group / Compound paths are accepted in solo mode.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
