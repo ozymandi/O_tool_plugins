@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Line</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body class="is-idle">
+    <main class="app">
+        <section class="panel" data-lockable>
+            <h2>Topology</h2>
+            <div class="simple-dropdown custom-select-wrapper" data-id="topology">
+                <input id="topology" type="hidden" value="nearest">
+                <div class="custom-select ui-dropdown-toggle" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span id="topologyLabel" class="ui-dropdown-label">Nearest Neighbors</span>
+                    <span class="dropdown-chevron" aria-hidden="true">
+                        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4.5 6.5L8 10L11.5 6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                    </span>
+                </div>
+                <div id="topologyOptions" class="custom-options ui-dropdown-list" role="listbox" aria-label="Topology"></div>
+            </div>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Style</h2>
+            <label class="check">
+                <input id="bezier" type="checkbox">
+                <span>Bezier curves (instead of straight lines)</span>
+            </label>
+            <label class="field">
+                <span class="field-label">Tension</span>
+                <div class="slider-capsule">
+                    <input id="tension" type="number" min="-800" max="800" step="1" value="30">
+                    <div class="slider-track-area">
+                        <input id="tensionRange" type="range" min="-400" max="400" step="1" value="30">
+                    </div>
+                    <button id="tensionResetBtn" class="slider-reset-btn" type="button" title="Reset to 30">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Stroke width (pt)</span>
+                <input id="strokeWidth" type="number" min="0.1" max="20" step="0.1" value="0.5">
+            </label>
+        </section>
+
+        <section class="panel" data-lockable id="logicSection">
+            <h2>Logic</h2>
+            <label class="field" data-needed-for="step-skip random nearest knn-mutual">
+                <span class="field-label">Take / Neighbors</span>
+                <div class="slider-capsule">
+                    <input id="take" type="number" min="1" max="100" step="1" value="2">
+                    <div class="slider-track-area">
+                        <input id="takeRange" type="range" min="1" max="20" step="1" value="2">
+                    </div>
+                    <button id="takeResetBtn" class="slider-reset-btn" type="button" title="Reset to 2">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field" data-needed-for="step-skip modular-skip">
+                <span class="field-label">Skip</span>
+                <div class="slider-capsule">
+                    <input id="skip" type="number" min="0" max="100" step="1" value="0">
+                    <div class="slider-track-area">
+                        <input id="skipRange" type="range" min="0" max="20" step="1" value="0">
+                    </div>
+                    <button id="skipResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field" data-needed-for="threshold-distance">
+                <span class="field-label">Distance (px)</span>
+                <div class="slider-capsule">
+                    <input id="distance" type="number" min="1" max="10000" step="1" value="100">
+                    <div class="slider-track-area">
+                        <input id="distanceRange" type="range" min="1" max="2000" step="1" value="100">
+                    </div>
+                    <button id="distanceResetBtn" class="slider-reset-btn" type="button" title="Reset to 100">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+        </section>
+
+        <section class="panel" data-lockable id="seedSection">
+            <h2>Random Seed</h2>
+            <button id="newSeedBtn" class="action-btn" type="button">NEW SEED</button>
+            <p class="sub">Connections re-roll only when this button is pressed; other parameters reuse the same seed.</p>
+        </section>
+
+        <section class="panel">
+            <button id="primaryBtn" class="primary action-btn" type="button">LINE</button>
+            <div class="action-row" data-show-active>
+                <button id="applyBtn" class="action-btn" type="button" disabled>APPLY</button>
+                <button id="cancelBtn" class="action-btn" type="button" disabled>CANCEL</button>
+            </div>
+            <button id="bakeBtn" class="action-btn" type="button" data-show-active disabled>BAKE TO SYMBOL</button>
+            <button id="resetBtn" class="action-btn" type="button" disabled>RESET PARAMETERS</button>
+            <p class="sub" id="actionHint">Select 2+ anchor points (Direct Selection) or single-point paths, then press LINE.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">All connections live in one OLine_Preview group. BAKE TO SYMBOL stores the current preview as a Symbol and starts a fresh preview for the next variation.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
