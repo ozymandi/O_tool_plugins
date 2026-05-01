@@ -503,6 +503,19 @@
 
     // ---------- STACK ----------
 
+    function getFilledEndpointIndices() {
+        var firstFilled = -1;
+        var lastFilled = -1;
+        for (var i = 0; i < state.stack.length; i++) {
+            var slot = state.stack[i];
+            if (slot && slot.symbolName) {
+                if (firstFilled === -1) firstFilled = i;
+                lastFilled = i;
+            }
+        }
+        return { first: firstFilled, last: lastFilled };
+    }
+
     function renderStack() {
         stackListEl.innerHTML = "";
         if (!state.stack.length) {
@@ -513,20 +526,28 @@
             stackListEl.appendChild(hint);
             return;
         }
+        var ends = getFilledEndpointIndices();
         for (var i = 0; i < state.stack.length; i++) {
-            stackListEl.appendChild(buildStackRow(i, state.stack[i]));
+            stackListEl.appendChild(buildStackRow(i, state.stack[i], ends));
         }
     }
 
-    function buildStackRow(index, slot) {
+    function buildStackRow(index, slot, ends) {
         var row = document.createElement("div");
         row.className = "stack-row";
+        if (ends && ends.first === index) {
+            row.classList.add("is-first");
+            row.title = (ends.first === ends.last) ? "Path start (only filled slot)" : "Path start";
+        } else if (ends && ends.last === index) {
+            row.classList.add("is-last");
+            row.title = "Path end";
+        }
         row.setAttribute("draggable", "true");
         row.setAttribute("data-index", String(index));
 
         var drag = document.createElement("div");
         drag.className = "stack-drag";
-        drag.textContent = "⋮⋮"; // double vertical ellipsis
+        drag.textContent = "⋮⋮";
         drag.title = "Drag to reorder";
         row.appendChild(drag);
 
