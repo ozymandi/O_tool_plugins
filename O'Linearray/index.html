@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Linearray</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body class="is-idle">
+    <main class="app">
+        <section class="panel" data-lockable>
+            <h2>Distribution</h2>
+            <label class="check">
+                <input id="touch" type="checkbox" checked>
+                <span>Auto-fit (touch mode)</span>
+            </label>
+            <label class="check">
+                <input id="fit" type="checkbox" checked>
+                <span id="fitLabel">Scale to fit path</span>
+            </label>
+            <div class="field" id="scaleModeField">
+                <span class="field-label">Scale mode</span>
+                <div class="mode-segmented" role="group" aria-label="Scale mode">
+                    <button class="mode-seg" type="button" data-scale="stretch" title="Stretch width only">STRETCH</button>
+                    <button class="mode-seg" type="button" data-scale="uniform" title="Uniform scale">UNIFORM</button>
+                </div>
+                <input id="scaleMode" type="hidden" value="stretch">
+            </div>
+            <label class="field" id="gapField">
+                <span class="field-label">Gap</span>
+                <div class="slider-capsule">
+                    <input id="gap" type="number" min="-200" max="200" step="1" value="0">
+                    <div class="slider-track-area">
+                        <input id="gapRange" type="range" min="-50" max="50" step="1" value="0">
+                    </div>
+                    <button id="gapResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field" id="stepField">
+                <span class="field-label">Step</span>
+                <div class="slider-capsule">
+                    <input id="step" type="number" min="1" max="2000" step="1" value="50">
+                    <div class="slider-track-area">
+                        <input id="stepRange" type="range" min="1" max="300" step="1" value="50">
+                    </div>
+                    <button id="stepResetBtn" class="slider-reset-btn" type="button" title="Reset to 50">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+        </section>
+
+        <section class="panel" data-lockable id="quantitySection" data-show-active>
+            <h2>Quantity</h2>
+            <div class="qty-row">
+                <p class="qty-label">Add</p>
+                <button class="qty-btn" type="button" data-qty-action="add" data-qty-at="left">LEFT</button>
+                <button class="qty-btn" type="button" data-qty-action="add" data-qty-at="center">CENTER</button>
+                <button class="qty-btn" type="button" data-qty-action="add" data-qty-at="right">RIGHT</button>
+            </div>
+            <div class="qty-row">
+                <p class="qty-label">Remove</p>
+                <button class="qty-btn" type="button" data-qty-action="remove" data-qty-at="left">LEFT</button>
+                <button class="qty-btn" type="button" data-qty-action="remove" data-qty-at="center">CENTER</button>
+                <button class="qty-btn" type="button" data-qty-action="remove" data-qty-at="right">RIGHT</button>
+            </div>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Position</h2>
+            <label class="field">
+                <span class="field-label">Offset Y</span>
+                <div class="slider-capsule">
+                    <input id="offset" type="number" min="-1000" max="1000" step="1" value="0">
+                    <div class="slider-track-area">
+                        <input id="offsetRange" type="range" min="-100" max="100" step="1" value="0">
+                    </div>
+                    <button id="offsetResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Random offset</span>
+                <div class="slider-capsule">
+                    <input id="rndOffset" type="number" min="0" max="500" step="1" value="0">
+                    <div class="slider-track-area">
+                        <input id="rndOffsetRange" type="range" min="0" max="100" step="1" value="0">
+                    </div>
+                    <button id="rndOffsetResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Anchor</span>
+                <div class="simple-dropdown custom-select-wrapper" data-id="anchor">
+                    <input id="anchor" type="hidden" value="center">
+                    <div class="custom-select ui-dropdown-toggle" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                        <span id="anchorLabel" class="ui-dropdown-label">Center</span>
+                        <span class="dropdown-chevron" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4.5 6.5L8 10L11.5 6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div id="anchorOptions" class="custom-options ui-dropdown-list" role="listbox" aria-label="Anchor">
+                        <div class="custom-option" data-value="top" role="option" aria-selected="false">Top</div>
+                        <div class="custom-option" data-value="center" role="option" aria-selected="true">Center</div>
+                        <div class="custom-option" data-value="bottom" role="option" aria-selected="false">Bottom</div>
+                    </div>
+                </div>
+            </label>
+            <label class="check">
+                <input id="rotate" type="checkbox" checked>
+                <span>Rotate along path</span>
+            </label>
+        </section>
+
+        <section class="panel">
+            <div class="action-row">
+                <button id="primaryBtn" class="primary action-btn" type="button">LINEARRAY</button>
+                <button id="cancelBtn" class="action-btn" type="button" data-show-active disabled>CANCEL</button>
+                <button id="resetBtn" class="action-btn" type="button" data-show-active disabled>RESET</button>
+            </div>
+            <button id="bakeBtn" class="action-btn" type="button" data-show-active disabled>BAKE TO SYMBOL</button>
+            <p class="sub" id="actionHint">Select 1 path + 2+ items (any objects or symbols), then press LINEARRAY.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">First non-path = end symbol, last non-path = start symbol, middles fill the path. RESET re-rolls the random fill, BAKE TO SYMBOL stores path+items as a symbol.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
