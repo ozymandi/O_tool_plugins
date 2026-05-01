@@ -231,6 +231,9 @@ input:focus-visible, button:focus-visible {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.04) 100%);
     padding: 0;
     cursor: ew-resize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .number-scrub-handle:hover {
@@ -239,12 +242,8 @@ input:focus-visible, button:focus-visible {
 
 .number-scrub-handle::before {
     content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
     width: 4px;
-    height: 10px;
-    transform: translate(-50%, -50%);
+    height: 12px;
     background-image: radial-gradient(circle, rgba(255, 255, 255, 0.55) 0.75px, transparent 0.85px);
     background-size: 4px 4px;
     background-position: center;
