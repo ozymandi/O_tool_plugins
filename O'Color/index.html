@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Color</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+    <main class="app">
+        <section class="panel">
+            <h2>Apply to</h2>
+            <div class="check-row">
+                <label class="check">
+                    <input id="doFill" type="checkbox" checked>
+                    <span>Fill</span>
+                </label>
+                <label class="check">
+                    <input id="doStroke" type="checkbox">
+                    <span>Stroke</span>
+                </label>
+            </div>
+            <p class="sub">Each path independently picks a random colour from the swatches you have selected in the Swatches panel.</p>
+        </section>
+
+        <section class="panel">
+            <h2>Source</h2>
+            <button id="checkSwatchesBtn" class="action-btn" type="button">CHECK SWATCHES</button>
+            <p id="swatchStatus" class="sub">Select swatches in the Swatches panel, then press CHECK SWATCHES to confirm the count.</p>
+        </section>
+
+        <section class="panel">
+            <button id="randomizeBtn" class="primary action-btn" type="button">RANDOMIZE</button>
+            <p class="sub">Press RANDOMIZE to apply random swatch colours to the selected objects. Each click re-rolls.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">Recurses into groups; for compound paths colours the first path; works on text frames too.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
