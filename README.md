@@ -40,7 +40,7 @@ PluginName/
 - [x] O'Bevel
 - [x] O'Color
 - [x] O'Fill
-- [ ] O'Cone
+- [x] O'Cone
 - [ ] O'Spiral
 - [ ] O'Line
 - [ ] O'GridScale

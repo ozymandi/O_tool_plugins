@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Cone</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body class="is-idle">
+    <main class="app">
+        <section class="panel" data-lockable>
+            <h2>Style</h2>
+            <div class="simple-dropdown custom-select-wrapper" data-id="style">
+                <input id="style" type="hidden" value="0">
+                <div class="custom-select ui-dropdown-toggle" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="ui-dropdown-label">Silver (Metallic)</span>
+                    <span class="dropdown-chevron" aria-hidden="true">
+                        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4.5 6.5L8 10L11.5 6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                    </span>
+                </div>
+                <div class="custom-options ui-dropdown-list" role="listbox" aria-label="Style preset">
+                    <div class="custom-option" data-value="0" role="option" aria-selected="true">Silver (Metallic)</div>
+                    <div class="custom-option" data-value="1" role="option" aria-selected="false">Gold (Metallic)</div>
+                    <div class="custom-option" data-value="2" role="option" aria-selected="false">Holographic (Rainbow)</div>
+                    <div class="custom-option" data-value="3" role="option" aria-selected="false">Radar (Green)</div>
+                    <div class="custom-option" data-value="4" role="option" aria-selected="false">Spectrum (Full RGB)</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Quality</h2>
+            <label class="field">
+                <span class="field-label">Segments</span>
+                <div class="slider-capsule">
+                    <input id="quality" type="number" min="3" max="2000" step="1" value="180">
+                    <div class="slider-track-area">
+                        <input id="qualityRange" type="range" min="50" max="720" step="1" value="180">
+                    </div>
+                    <button id="qualityResetBtn" class="slider-reset-btn" type="button" title="Reset to 180">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <p class="sub">Number of triangle segments in the fan. Higher = smoother gradient, slower rebuild.</p>
+        </section>
+
+        <section class="panel">
+            <button id="primaryBtn" class="primary action-btn" type="button">CONE</button>
+            <div class="action-row" data-show-active>
+                <button id="applyBtn" class="action-btn" type="button" disabled>APPLY</button>
+                <button id="cancelBtn" class="action-btn" type="button" disabled>CANCEL</button>
+            </div>
+            <button id="resetBtn" class="action-btn" type="button" disabled>RESET PARAMETERS</button>
+            <p class="sub" id="actionHint">Select one or more shapes on the artboard, then press CONE.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">Each selected shape gets its own conical gradient clipped to its outline. Style change updates colours in place; Quality change rebuilds the fan.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
