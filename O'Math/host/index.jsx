@@ -88,11 +88,13 @@ function omathValidateConfig(config) {
         viewMode: (config.viewMode === "wire") ? "wire" : "hidden",
         scale: omathNormNum(config.scale, 60),
         density: parseInt(config.density, 10),
-        smooth: !!config.smooth
+        smooth: !!config.smooth,
+        smoothAmount: omathNormNum(config.smoothAmount, 15)
     };
     if (isNaN(n.density) || n.density < 3) n.density = 3;
     if (n.density > 80) n.density = 80;
     if (n.scale < 1) n.scale = 1;
+    if (n.smoothAmount < 0) n.smoothAmount = 0;
     return n;
 }
 
@@ -204,18 +206,19 @@ function omathGetPt(type, u, v, valA, valB, valC, valD) {
 
 // ---------- DRAW ----------
 
-function omathApplyCustomSmooth(pathItem) {
+function omathApplyCustomSmooth(pathItem, factor) {
     var pts = pathItem.pathPoints;
     var n = pts.length;
     if (n < 3) return;
+    if (typeof factor !== "number" || isNaN(factor)) factor = 0.15;
     if (pathItem.closed) {
         // Cyclic: every anchor is smoothed against its neighbors.
         for (var i = 0; i < n; i++) {
             var p0 = pts[(i - 1 + n) % n].anchor;
             var p1 = pts[i].anchor;
             var p2 = pts[(i + 1) % n].anchor;
-            var dx = (p2[0] - p0[0]) * 0.15;
-            var dy = (p2[1] - p0[1]) * 0.15;
+            var dx = (p2[0] - p0[0]) * factor;
+            var dy = (p2[1] - p0[1]) * factor;
             pts[i].rightDirection = [p1[0] + dx, p1[1] + dy];
             pts[i].leftDirection = [p1[0] - dx, p1[1] - dy];
         }
@@ -225,8 +228,8 @@ function omathApplyCustomSmooth(pathItem) {
             var pp0 = pts[j - 1].anchor;
             var pp1 = pts[j].anchor;
             var pp2 = pts[j + 1].anchor;
-            var ddx = (pp2[0] - pp0[0]) * 0.15;
-            var ddy = (pp2[1] - pp0[1]) * 0.15;
+            var ddx = (pp2[0] - pp0[0]) * factor;
+            var ddy = (pp2[1] - pp0[1]) * factor;
             pts[j].rightDirection = [pp1[0] + ddx, pp1[1] + ddy];
             pts[j].leftDirection = [pp1[0] - ddx, pp1[1] - ddy];
         }
@@ -254,6 +257,7 @@ function omathRedraw(config) {
     var type = config.surface;
     var mode = config.viewMode;
     var doSmooth = config.smooth;
+    var smoothFactor = (config.smoothAmount || 0) / 100;
     var valA = config.paramA;
     var valB = config.paramB;
     var valC = config.paramC;
@@ -299,7 +303,7 @@ function omathRedraw(config) {
                     else linePts.push(proj2D[nw][mw]);
                 }
                 path.setEntirePath(linePts);
-                if (doSmooth) omathApplyCustomSmooth(path);
+                if (doSmooth) omathApplyCustomSmooth(path, smoothFactor);
                 totalPaths++;
             }
         }
@@ -325,7 +329,7 @@ function omathRedraw(config) {
             qpath.stroked = true;
             qpath.strokeColor = col;
             qpath.strokeWidth = 0.5;
-            if (doSmooth) omathApplyCustomSmooth(qpath);
+            if (doSmooth) omathApplyCustomSmooth(qpath, smoothFactor);
             totalPaths++;
         }
     }

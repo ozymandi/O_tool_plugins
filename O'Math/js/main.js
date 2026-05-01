@@ -35,12 +35,14 @@
         viewMode: "hidden",
         scale: 60,
         density: 18,
-        smooth: false
+        smooth: false,
+        smoothAmount: 15
     };
 
     var SLIDER_PAIRS = [
         ["scale", "scaleRange"],
-        ["density", "densityRange"]
+        ["density", "densityRange"],
+        ["smoothAmount", "smoothAmountRange"]
     ];
 
     var state = {
@@ -65,6 +67,8 @@
         scaleRange: document.getElementById("scaleRange"),
         density: document.getElementById("density"),
         densityRange: document.getElementById("densityRange"),
+        smoothAmount: document.getElementById("smoothAmount"),
+        smoothAmountRange: document.getElementById("smoothAmountRange"),
         smooth: document.getElementById("smooth")
     };
 
@@ -85,7 +89,8 @@
         primary: document.getElementById("primaryBtn"),
         cancel: document.getElementById("cancelBtn"),
         scaleReset: document.getElementById("scaleResetBtn"),
-        densityReset: document.getElementById("densityResetBtn")
+        densityReset: document.getElementById("densityResetBtn"),
+        smoothAmountReset: document.getElementById("smoothAmountResetBtn")
     };
 
     var statusEl = document.getElementById("status");
@@ -162,6 +167,12 @@
                 fields["param" + keys[i]].disabled = true;
             }
         }
+
+        // Smoothness slider is only useful when smooth checkbox is on
+        var smoothEnabled = !!fields.smooth.checked && !locked;
+        fields.smoothAmount.disabled = !smoothEnabled;
+        fields.smoothAmountRange.disabled = !smoothEnabled;
+        buttons.smoothAmountReset.disabled = !smoothEnabled;
     }
 
     function setBusy(isBusy) {
@@ -264,7 +275,8 @@
             viewMode: state.viewMode,
             scale: fields.scale.value,
             density: fields.density.value,
-            smooth: !!fields.smooth.checked
+            smooth: !!fields.smooth.checked,
+            smoothAmount: fields.smoothAmount.value
         };
     }
 
@@ -372,6 +384,9 @@
     // ---------- COLLECT / PREVIEW ----------
 
     function collectConfig() {
+        var smoothAmount = parseFloat(fields.smoothAmount.value);
+        if (!Number.isFinite(smoothAmount)) smoothAmount = DEFAULTS.smoothAmount;
+        if (smoothAmount < 0) smoothAmount = 0;
         return {
             surface: state.surface,
             paramA: parseFloat(fields.paramA.value) || 0,
@@ -381,7 +396,8 @@
             viewMode: state.viewMode,
             scale: parseFloat(fields.scale.value) || 60,
             density: parseInt(fields.density.value, 10) || 18,
-            smooth: !!fields.smooth.checked
+            smooth: !!fields.smooth.checked,
+            smoothAmount: smoothAmount
         };
     }
 
@@ -622,6 +638,7 @@
         fields.smooth.addEventListener("change", function () {
             if (fields.smooth.disabled) return;
             saveSettings();
+            refreshControlStates();
             if (state.active) schedulePreviewUpdate();
         });
     }
@@ -676,6 +693,11 @@
     buttons.densityReset.addEventListener("click", function () {
         if (buttons.densityReset.disabled) return;
         syncPair("density", "densityRange", DEFAULTS.density);
+        onParameterChanged();
+    });
+    buttons.smoothAmountReset.addEventListener("click", function () {
+        if (buttons.smoothAmountReset.disabled) return;
+        syncPair("smoothAmount", "smoothAmountRange", DEFAULTS.smoothAmount);
         onParameterChanged();
     });
 
