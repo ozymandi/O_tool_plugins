@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Voron</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body class="is-idle">
+    <main class="app">
+        <section class="panel">
+            <h2>Presets</h2>
+            <div class="preset-row">
+                <div class="simple-dropdown custom-select-wrapper" data-id="preset">
+                    <input id="preset" type="hidden" value="Default">
+                    <div class="custom-select ui-dropdown-toggle" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                        <span id="presetLabel" class="ui-dropdown-label">Default</span>
+                        <span class="dropdown-chevron" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4.5 6.5L8 10L11.5 6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div id="presetOptions" class="custom-options ui-dropdown-list" role="listbox" aria-label="Preset"></div>
+                </div>
+                <button id="savePresetBtn" class="preset-btn" type="button" title="Save current settings as a preset">SAVE</button>
+                <button id="deletePresetBtn" class="preset-btn" type="button" title="Delete selected preset" disabled>DEL</button>
+            </div>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Topology</h2>
+            <label class="field">
+                <span class="field-label">Distance metric</span>
+                <div class="simple-dropdown custom-select-wrapper" data-id="metric">
+                    <input id="metric" type="hidden" value="0">
+                    <div class="custom-select ui-dropdown-toggle" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                        <span id="metricLabel" class="ui-dropdown-label">Euclidean</span>
+                        <span class="dropdown-chevron" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4.5 6.5L8 10L11.5 6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div id="metricOptions" class="custom-options ui-dropdown-list" role="listbox" aria-label="Distance metric">
+                        <div class="custom-option" data-value="0" role="option" aria-selected="true">Euclidean</div>
+                        <div class="custom-option" data-value="1" role="option" aria-selected="false">Manhattan</div>
+                        <div class="custom-option" data-value="2" role="option" aria-selected="false">Chebychev</div>
+                        <div class="custom-option" data-value="3" role="option" aria-selected="false">Minkowski</div>
+                    </div>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Seed</span>
+                <div class="seed-row">
+                    <input id="seed" type="number" min="0" max="9999999" step="1" value="12345">
+                    <button id="newSeedBtn" class="preset-btn" type="button" title="Random seed">NEW SEED</button>
+                </div>
+            </label>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Cells</h2>
+            <label class="field">
+                <span class="field-label">Density (0 = mosaic only)</span>
+                <div class="slider-capsule">
+                    <input id="density" type="number" min="0" max="500" step="1" value="20">
+                    <div class="slider-track-area">
+                        <input id="densityRange" type="range" min="0" max="200" step="1" value="20">
+                    </div>
+                    <button id="densityResetBtn" class="slider-reset-btn" type="button" title="Reset to 20">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Randomness</span>
+                <div class="slider-capsule">
+                    <input id="randomness" type="number" min="0" max="100" step="1" value="0">
+                    <div class="slider-track-area">
+                        <input id="randomnessRange" type="range" min="0" max="100" step="1" value="0">
+                    </div>
+                    <button id="randomnessResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Mosaic block size</span>
+                <div class="slider-capsule">
+                    <input id="block" type="number" min="2" max="200" step="1" value="8">
+                    <div class="slider-track-area">
+                        <input id="blockRange" type="range" min="2" max="50" step="1" value="8">
+                    </div>
+                    <button id="blockResetBtn" class="slider-reset-btn" type="button" title="Reset to 8">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Color steps (0 = off)</span>
+                <div class="slider-capsule">
+                    <input id="steps" type="number" min="0" max="50" step="1" value="0">
+                    <div class="slider-track-area">
+                        <input id="stepsRange" type="range" min="0" max="25" step="1" value="0">
+                    </div>
+                    <button id="stepsResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Outline</h2>
+            <label class="check">
+                <input id="outline" type="checkbox">
+                <span>Outline sandwich (darker stroke under cells)</span>
+            </label>
+            <label class="field">
+                <span class="field-label">Width (pt)</span>
+                <div class="slider-capsule">
+                    <input id="outWidth" type="number" min="1" max="200" step="1" value="1">
+                    <div class="slider-track-area">
+                        <input id="outWidthRange" type="range" min="1" max="50" step="1" value="1">
+                    </div>
+                    <button id="outWidthResetBtn" class="slider-reset-btn" type="button" title="Reset to 1">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Options</h2>
+            <label class="check">
+                <input id="bounds" type="checkbox" checked>
+                <span>Mosaic bounds (clip to shape outline)</span>
+            </label>
+            <label class="check">
+                <input id="origCol" type="checkbox">
+                <span>Origin color (sample fill / gradient)</span>
+            </label>
+            <label class="check">
+                <input id="delPar" type="checkbox" checked>
+                <span>Delete parent on apply</span>
+            </label>
+        </section>
+
+        <section class="panel">
+            <div class="action-row">
+                <button id="primaryBtn" class="primary action-btn" type="button">GENERATE</button>
+                <button id="cancelBtn" class="action-btn" type="button" data-show-active disabled>CANCEL</button>
+                <button id="resetBtn" class="action-btn" type="button" data-show-active disabled>RESET</button>
+            </div>
+            <button id="bakeBtn" class="action-btn" type="button" data-show-active disabled>BAKE TO SYMBOL</button>
+            <p class="sub" id="actionHint">Select a path or compound path, then press GENERATE.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">APPLY commits the preview (and removes original if "Delete parent" is on). CANCEL discards. BAKE TO SYMBOL stores current preview as a Symbol.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>

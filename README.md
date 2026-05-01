@@ -48,7 +48,7 @@ PluginName/
 - [x] O'Autoshape
 - [x] O'Math
 - [x] O'Vertex
-- [ ] O'Voron
+- [x] O'Voron
 - [ ] O'Symbol
 - [ ] O'Text
 - [ ] O'Atractor
