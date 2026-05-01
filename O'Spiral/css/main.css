@@ -277,6 +277,8 @@ input:focus-visible, button:focus-visible {
     border-radius: 999px;
     background: linear-gradient(
         90deg,
+        rgba(24, 160, 251, 0.15) var(--fill-start, 0%),
+        rgba(24, 160, 251, 0.65) var(--fill-start, 0%),
         rgba(24, 160, 251, 0.65) var(--fill-end, 50%),
         rgba(255, 255, 255, 0.12) var(--fill-end, 50%)
     );

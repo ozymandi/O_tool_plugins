@@ -72,7 +72,21 @@
                     </button>
                 </div>
             </label>
-            <p class="sub">Anchors per loop. Lower = smoother bezier (handles fill the gaps), higher = more anchor-faithful.</p>
+            <label class="field">
+                <span class="field-label">Tangent tension</span>
+                <div class="slider-capsule">
+                    <input id="tension" type="number" min="-200" max="200" step="1" value="33">
+                    <div class="slider-track-area">
+                        <input id="tensionRange" type="range" min="-100" max="100" step="1" value="33">
+                    </div>
+                    <button id="tensionResetBtn" class="slider-reset-btn" type="button" title="Reset to 33">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <p class="sub">Density: anchors per loop. Tension: bezier handle length as % of tangent. 33 ≈ default Catmull-Rom; 0 = corner; negative = inverted handles (cusps).</p>
         </section>
 
         <section class="panel" data-lockable>

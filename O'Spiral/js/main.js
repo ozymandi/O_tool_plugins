@@ -16,6 +16,8 @@
         randomnessRange: document.getElementById("randomnessRange"),
         density: document.getElementById("density"),
         densityRange: document.getElementById("densityRange"),
+        tension: document.getElementById("tension"),
+        tensionRange: document.getElementById("tensionRange"),
         direction: document.getElementById("direction")
     };
 
@@ -26,7 +28,8 @@
         reset: document.getElementById("resetBtn"),
         loopsReset: document.getElementById("loopsResetBtn"),
         randomnessReset: document.getElementById("randomnessResetBtn"),
-        densityReset: document.getElementById("densityResetBtn")
+        densityReset: document.getElementById("densityResetBtn"),
+        tensionReset: document.getElementById("tensionResetBtn")
     };
 
     var statusEl = document.getElementById("status");
@@ -38,13 +41,15 @@
         loops: 15,
         randomness: 0,
         density: 12,
+        tension: 33,
         direction: "cw"
     };
 
     var SLIDER_PAIRS = [
         ["loops", "loopsRange"],
         ["randomness", "randomnessRange"],
-        ["density", "densityRange"]
+        ["density", "densityRange"],
+        ["tension", "tensionRange"]
     ];
 
     function getDefaultConfig() { return JSON.parse(JSON.stringify(DEFAULTS)); }
@@ -147,8 +152,18 @@
         if (!Number.isFinite(min)) min = 0;
         if (!Number.isFinite(max) || max === min) max = 100;
         if (!Number.isFinite(value)) value = 0;
-        var ratio = clamp((value - min) / (max - min), 0, 1) * 100;
-        input.style.setProperty("--fill-end", ratio + "%");
+        if (min < 0) {
+            var zeroRatio = clamp((0 - min) / (max - min), 0, 1);
+            var valueRatio = clamp((value - min) / (max - min), 0, 1);
+            var fillStart = Math.min(zeroRatio, valueRatio) * 100;
+            var fillEnd = Math.max(zeroRatio, valueRatio) * 100;
+            input.style.setProperty("--fill-start", fillStart + "%");
+            input.style.setProperty("--fill-end", fillEnd + "%");
+        } else {
+            var ratio = clamp((value - min) / (max - min), 0, 1) * 100;
+            input.style.setProperty("--fill-start", "0%");
+            input.style.setProperty("--fill-end", ratio + "%");
+        }
     }
 
     function syncPair(numKey, rangeKey, value) {
@@ -196,6 +211,7 @@
             loops: fields.loops.value,
             randomness: fields.randomness.value,
             density: fields.density.value,
+            tension: fields.tension.value,
             direction: fields.direction.value
         };
     }
@@ -235,11 +251,14 @@
         if (randomness > 100) randomness = 100;
         var density = parseInt(fields.density.value, 10);
         if (!Number.isFinite(density) || density < 4) density = 4;
+        var tension = parseFloat(fields.tension.value);
+        if (!Number.isFinite(tension)) tension = 33;
         return {
             mode: String(fields.mode.value || "total"),
             loops: loops,
             randomness: randomness,
             density: density,
+            tension: tension,
             direction: String(fields.direction.value || "cw")
         };
     }
@@ -506,6 +525,11 @@
     buttons.densityReset.addEventListener("click", function () {
         if (buttons.densityReset.disabled) return;
         syncPair("density", "densityRange", DEFAULTS.density);
+        onParameterChanged();
+    });
+    buttons.tensionReset.addEventListener("click", function () {
+        if (buttons.tensionReset.disabled) return;
+        syncPair("tension", "tensionRange", DEFAULTS.tension);
         onParameterChanged();
     });
 

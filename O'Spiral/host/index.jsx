@@ -82,6 +82,7 @@ function ospiralValidateConfig(config) {
         loops: ospiralNormalizeInteger(config.loops, 15),
         randomness: ospiralNormalizeNumber(config.randomness, 0),
         density: ospiralNormalizeInteger(config.density, 12),
+        tension: ospiralNormalizeNumber(config.tension, 33),
         direction: validDir.hasOwnProperty(config.direction) ? config.direction : "cw"
     };
     if (normalized.loops < 1) normalized.loops = 1;
@@ -131,7 +132,7 @@ function ospiralSpline(p0, p1, p2, p3, t) {
     return (2 * p1 - 2 * p2 + v0 + v1) * t3 + (-3 * p1 + 3 * p2 - 2 * v0 - v1) * t2 + v0 * t + p1;
 }
 
-function ospiralComputePoints(keys, mode, loops, randomness, density, direction) {
+function ospiralComputePoints(keys, mode, loops, randomness, density, tension, direction) {
     var dir = direction === "ccw" ? -1 : 1;
     var noiseFactor = randomness / 10;
     var numSegments = keys.length - 1;
@@ -196,8 +197,9 @@ function ospiralComputePoints(keys, mode, loops, randomness, density, direction)
         anchors.push([x, y]);
     }
 
-    // Pass 2: derive Catmull-Rom-to-Bezier handles
-    // Tangent at i = (anchor[i+1] - anchor[i-1]) / 2; handle = anchor +- tangent / 3
+    // Pass 2: derive Catmull-Rom-to-Bezier handles, scaled by user tension
+    // factor: 33 → 0.33 (≈ 1/3, classic Catmull-Rom), 0 → corners, negative → cusps/inverted
+    var tFactor = tension / 100;
     var n = anchors.length;
     var pts = [];
     for (var k = 0; k < n; k++) {
@@ -208,22 +210,19 @@ function ospiralComputePoints(keys, mode, loops, randomness, density, direction)
         if (prev && next) {
             var tx = (next[0] - prev[0]) / 2;
             var ty = (next[1] - prev[1]) / 2;
-            lx = a[0] - tx / 3; ly = a[1] - ty / 3;
-            rx = a[0] + tx / 3; ry = a[1] + ty / 3;
+            lx = a[0] - tx * tFactor; ly = a[1] - ty * tFactor;
+            rx = a[0] + tx * tFactor; ry = a[1] + ty * tFactor;
         } else if (next) {
-            // First anchor: extrapolate forward tangent
             var ftx = next[0] - a[0];
             var fty = next[1] - a[1];
             lx = a[0]; ly = a[1];
-            rx = a[0] + ftx / 3; ry = a[1] + fty / 3;
+            rx = a[0] + ftx * tFactor; ry = a[1] + fty * tFactor;
         } else if (prev) {
-            // Last anchor: extrapolate backward tangent
             var btx = a[0] - prev[0];
             var bty = a[1] - prev[1];
-            lx = a[0] - btx / 3; ly = a[1] - bty / 3;
+            lx = a[0] - btx * tFactor; ly = a[1] - bty * tFactor;
             rx = a[0]; ry = a[1];
         } else {
-            // Single anchor (degenerate)
             lx = a[0]; ly = a[1];
             rx = a[0]; ry = a[1];
         }
@@ -307,7 +306,7 @@ function ospiralStart(encodedConfig) {
         for (var i = 0; i < sortedItems.length; i++) keys.push(ospiralGetData(sortedItems[i]));
 
         var strokeColor = ospiralResolveStrokeColor(sortedItems[0]);
-        var pts = ospiralComputePoints(keys, config.mode, config.loops, config.randomness, config.density, config.direction);
+        var pts = ospiralComputePoints(keys, config.mode, config.loops, config.randomness, config.density, config.tension, config.direction);
 
         var path = ospiralCreatePath(doc, strokeColor, pts);
 
@@ -338,7 +337,7 @@ function ospiralUpdate(encodedConfig) {
             return ospiralResponse(false, "No active session.");
         }
         var config = ospiralValidateConfig(ospiralParseConfig(encodedConfig));
-        var pts = ospiralComputePoints(ospiralSession.keys, config.mode, config.loops, config.randomness, config.density, config.direction);
+        var pts = ospiralComputePoints(ospiralSession.keys, config.mode, config.loops, config.randomness, config.density, config.tension, config.direction);
         ospiralWritePathPoints(ospiralSession.previewPath, pts);
         app.redraw();
         return ospiralResponse(true, "Spiral updated.", { anchors: pts.length });
