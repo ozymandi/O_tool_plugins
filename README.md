@@ -37,7 +37,7 @@ PluginName/
 - [x] O'Align
 - [x] O'Fit
 - [x] O'Bend
-- [ ] O'Bevel
+- [x] O'Bevel
 - [ ] O'Color
 - [ ] O'Fill
 - [ ] O'Cone
