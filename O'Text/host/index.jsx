@@ -101,16 +101,40 @@ function otextAlign(encodedConfig) {
         try { if (otextLogFile.exists) otextLogFile.remove(); } catch (eClr) {}
         otextLog("=== align run, key=" + key + ", target=" + String(targetAlign) + ", frames=" + frames.length + " ===");
 
-        // Channel K: smoke test on a brand-new frame to see if a fresh frame accepts LEFT
+        // Channel K: smoke tests
         try {
-            var smoke = doc.textFrames.add();
-            smoke.contents = "_otext_smoke_";
-            smoke.paragraphs[0].justification = Justification.CENTER;
-            var sBefore = String(smoke.paragraphs[0].justification);
-            smoke.paragraphs[0].justification = Justification.LEFT;
-            var sAfter = String(smoke.paragraphs[0].justification);
-            otextLog("K (fresh frame test): CENTER set -> " + sBefore + ", LEFT set -> " + sAfter);
-            smoke.remove();
+            // K1: fresh frame default + LEFT-first attempt
+            var smoke1 = doc.textFrames.add();
+            smoke1.contents = "_otext_smoke1_";
+            otextLog("K1 fresh default: " + String(smoke1.paragraphs[0].justification));
+            smoke1.paragraphs[0].justification = Justification.LEFT;
+            otextLog("K1 after LEFT (no prior set): " + String(smoke1.paragraphs[0].justification));
+            smoke1.paragraphs[0].justification = Justification.RIGHT;
+            otextLog("K1 after RIGHT: " + String(smoke1.paragraphs[0].justification));
+            smoke1.paragraphs[0].justification = Justification.LEFT;
+            otextLog("K1 RIGHT->LEFT: " + String(smoke1.paragraphs[0].justification));
+            smoke1.remove();
+
+            // K2: dump all paragraphAttributes property names
+            var fresh2 = doc.textFrames.add();
+            fresh2.contents = "_otext_smoke2_";
+            try {
+                var props = [];
+                for (var pp in fresh2.paragraphs[0].paragraphAttributes) props.push(pp);
+                otextLog("K2 paragraphAttributes props: " + props.join(","));
+            } catch (eP) { otextLog("K2 props err: " + eP.message); }
+            fresh2.remove();
+
+            // K3: duplicate test - if dup can accept LEFT after originals couldn't
+            var fresh3 = doc.textFrames.add();
+            fresh3.contents = "_otext_smoke3_";
+            fresh3.paragraphs[0].justification = Justification.CENTER;
+            var dup = fresh3.duplicate();
+            otextLog("K3 dup before: " + String(dup.paragraphs[0].justification));
+            dup.paragraphs[0].justification = Justification.LEFT;
+            otextLog("K3 dup after LEFT: " + String(dup.paragraphs[0].justification));
+            dup.remove();
+            fresh3.remove();
         } catch (eK) { otextLog("K err: " + eK.message); }
         try {
             var enumKeys = [];
