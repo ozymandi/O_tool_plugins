@@ -59,5 +59,16 @@ PluginName/
 - [x] O'BakeUI
 - [x] O'Replace (combines O'Replace_Color + O'Replace_Light as tabs)
 - [x] O'LumeGradient
+- [x] **O'Hub** (launcher for all plugins)
 - [ ] O'Zometrix (вже існує як референс)
 - [ ] O'GridGen (вже існує як референс)
+
+## Bulk install / uninstall
+
+```powershell
+# install Hub + every plugin in this folder
+powershell -ExecutionPolicy Bypass -File install-all.ps1
+
+# remove every plugin
+powershell -ExecutionPolicy Bypass -File uninstall-all.ps1
+```

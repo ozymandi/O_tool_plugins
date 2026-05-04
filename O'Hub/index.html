@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Hub</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+    <main class="app">
+        <section class="panel hub-header-panel">
+            <div class="hub-header">
+                <div class="hub-title">
+                    <span class="hub-mark">O'</span><span class="hub-name">Hub</span>
+                </div>
+                <div class="hub-meta" id="hubCount">— plugins</div>
+            </div>
+            <input id="searchInput" type="text" class="hub-search" placeholder="Search plugins...">
+            <div id="categoryStrip" class="cat-strip" role="tablist"></div>
+        </section>
+
+        <section class="panel">
+            <div id="pluginGrid" class="plugin-grid"></div>
+            <p id="emptyState" class="sub" hidden>No plugins match the filter.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">Click any plugin tile to open its panel. If a plugin doesn't exist (greyed out), run <code>install-all.ps1</code> from the project folder.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
