@@ -50,16 +50,18 @@ function otextEnsureDocument() {
     return app.activeDocument;
 }
 
-function otextCollectFrames(items, arr) {
-    for (var i = 0; i < items.length; i++) {
-        var item = items[i];
-        if (item.locked || item.hidden) continue;
-        if (item.typename === "TextFrame") {
-            arr.push(item);
-        } else if (item.typename === "GroupItem") {
-            otextCollectFrames(item.pageItems, arr);
-        }
+function otextCollectAllFrames(doc) {
+    var arr = [];
+    var all = doc.textFrames;
+    for (var i = 0; i < all.length; i++) {
+        var tf = all[i];
+        try {
+            if (tf.locked || tf.hidden) continue;
+            if (tf.layer && (tf.layer.locked || !tf.layer.visible)) continue;
+            arr.push(tf);
+        } catch (e) {}
     }
+    return arr;
 }
 
 function otextAlign(encodedConfig) {
@@ -74,15 +76,9 @@ function otextAlign(encodedConfig) {
         else throw new Error("Invalid alignment key.");
 
         var doc = otextEnsureDocument();
-        var sel = doc.selection;
-        if (!sel || sel.length === 0) {
-            throw new Error("Select one or more text frames first.");
-        }
-
-        var frames = [];
-        otextCollectFrames(sel, frames);
+        var frames = otextCollectAllFrames(doc);
         if (frames.length === 0) {
-            throw new Error("No text frames in selection.");
+            throw new Error("No editable text frames in this document.");
         }
 
         var aligned = 0;
