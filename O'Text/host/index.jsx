@@ -103,11 +103,32 @@ function otextAlign(encodedConfig) {
                 }
             } catch (eH) {}
 
-            // 3. Apply justification
+            // 3. Apply justification — paragraph-level is canonical, others are fallbacks
+            var applied = false;
             try {
-                tf.story.textRange.justification = targetAlign;
-            } catch (eJ) {
-                try { tf.textRange.justification = targetAlign; } catch (eJ2) {}
+                var paragraphs = tf.story.paragraphs;
+                for (var pp = 0; pp < paragraphs.length; pp++) {
+                    paragraphs[pp].paragraphAttributes.justification = targetAlign;
+                }
+                applied = true;
+            } catch (eJ0) {}
+            if (!applied) {
+                try {
+                    tf.story.textRange.paragraphAttributes.justification = targetAlign;
+                    applied = true;
+                } catch (eJ1) {}
+            }
+            if (!applied) {
+                try {
+                    tf.story.textRange.justification = targetAlign;
+                    applied = true;
+                } catch (eJ2) {}
+            }
+            if (!applied) {
+                try {
+                    tf.textRange.justification = targetAlign;
+                    applied = true;
+                } catch (eJ3) {}
             }
 
             // 4. Restore hyphenation
