@@ -83,6 +83,7 @@ function otextAlign(encodedConfig) {
 
         var aligned = 0;
         var verified = 0;
+        var diag = [];
         for (var i = 0; i < frames.length; i++) {
             var tf = frames[i];
 
@@ -143,12 +144,16 @@ function otextAlign(encodedConfig) {
                 try { tf.story.textRange.paragraphAttributes.hyphenation = true; } catch (eR) {}
             }
 
-            // Verify the change actually persisted on the paragraph
-            try {
-                if (tf.paragraphs.length > 0 && tf.paragraphs[0].justification === targetAlign) {
-                    verified++;
-                }
-            } catch (eV) {}
+            // Verify and gather diagnostics
+            var beforeStr = "?", afterStr = "?", expectedStr = "?";
+            try { expectedStr = String(targetAlign); } catch (eD0) {}
+            try { afterStr = String(tf.paragraphs[0].justification); } catch (eD1) {}
+            if (afterStr === expectedStr) verified++;
+            if (i === 0) {
+                diag.push("expected=" + expectedStr);
+                diag.push("got=" + afterStr);
+                try { diag.push("typeofExpected=" + typeof targetAlign); } catch (eD2) {}
+            }
 
             app.redraw();
 
@@ -167,7 +172,10 @@ function otextAlign(encodedConfig) {
 
         var label = (key === "L") ? "left" : (key === "C") ? "center" : "right";
         var summary = "Aligned " + verified + "/" + aligned + " frame(s) " + label + ".";
-        return otextResponse(true, summary, { count: aligned, verified: verified });
+        if (verified < aligned && diag.length > 0) {
+            summary += " [" + diag.join(", ") + "]";
+        }
+        return otextResponse(true, summary, { count: aligned, verified: verified, diag: diag });
     } catch (error) {
         return otextResponse(false, error.message || String(error));
     }
