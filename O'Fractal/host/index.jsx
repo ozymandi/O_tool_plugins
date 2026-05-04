@@ -5,7 +5,7 @@ var ofractalSession = {
     active: false,
     previewGroup: null,
     sessionID: null,
-    loadedSymbols: [],
+    childStack: [],         // [{ symbolName: string|null }] persistent across sessions
     startInfo: null,        // { pos: [x,y], angle: rad, rgb: [r,g,b] }
     levelGradientsNormal: [],
     levelGradientsFlipped: [],
@@ -341,6 +341,44 @@ function ofractalBuildGradients(doc, config, rootRGB) {
     ofractalSession.levelGradientsFlipped = flips;
 }
 
+// ---------- CHILD STACK / SYMBOL RESOLUTION ----------
+
+function ofractalGetSymbolByName(doc, name) {
+    if (!name) return null;
+    try {
+        for (var i = 0; i < doc.symbols.length; i++) {
+            if (doc.symbols[i].name === name) return doc.symbols[i];
+        }
+    } catch (e) {}
+    return null;
+}
+
+function ofractalListDocSymbolNames(doc) {
+    var names = [];
+    try {
+        for (var i = 0; i < doc.symbols.length; i++) names.push(doc.symbols[i].name);
+    } catch (e) {}
+    return names;
+}
+
+function ofractalResolveChildPool(doc) {
+    var pool = [];
+    for (var i = 0; i < ofractalSession.childStack.length; i++) {
+        var slot = ofractalSession.childStack[i];
+        if (!slot || !slot.symbolName) continue;
+        var sym = ofractalGetSymbolByName(doc, slot.symbolName);
+        if (sym) pool.push(sym);
+    }
+    return pool;
+}
+
+function ofractalBuildStackResponse(doc) {
+    return {
+        stack: ofractalSession.childStack,
+        docSymbols: ofractalListDocSymbolNames(doc)
+    };
+}
+
 // ---------- DRAW ----------
 
 function ofractalDrawFractal(x, y, length, currentAngle, depth, parentGroup, bP, cP) {
@@ -480,6 +518,8 @@ function ofractalRedraw(config) {
 
     ofractalBuildGradients(doc, config, ofractalSession.startInfo.rgb);
 
+    var childPool = ofractalResolveChildPool(doc);
+
     ofractalSession.previewGroup = doc.groupItems.add();
     try { ofractalSession.previewGroup.name = OFRACTAL_PREVIEW_NAME; } catch (eN) {}
 
@@ -529,7 +569,7 @@ function ofractalRedraw(config) {
             levelGradientsFlipped: ofractalSession.levelGradientsFlipped
         };
         var cP = {
-            symbols: ofractalSession.loadedSymbols,
+            symbols: childPool,
             levels: config.cLevels,
             perNode: config.cPerNode,
             shiftX: (isInstanceFlipped ? -config.cShiftX : config.cShiftX) * scaleMult,
@@ -560,7 +600,7 @@ function ofractalResetSession(removePreview) {
     ofractalSession.active = false;
     ofractalSession.previewGroup = null;
     ofractalSession.startInfo = null;
-    // Keep loadedSymbols across sessions (so user doesn't reload) — they live until cancel
+    // Keep childStack across sessions (so user doesn't reload) — pool persists
 }
 
 // ---------- ENDPOINTS ----------
@@ -642,7 +682,37 @@ function ofractalBake() {
     }
 }
 
-function ofractalAddChildren() {
+function ofractalGetChildStack() {
+    try {
+        var doc = ofractalEnsureDocument();
+        var info = ofractalBuildStackResponse(doc);
+        return ofractalResponse(true, "OK.", { stack: info.stack, docSymbols: info.docSymbols });
+    } catch (error) {
+        return ofractalResponse(false, error.message || String(error));
+    }
+}
+
+function ofractalSetChildStack(encodedConfig) {
+    try {
+        var raw = ofractalParseConfig(encodedConfig);
+        var newStack = [];
+        if (raw.stack && raw.stack.length) {
+            for (var i = 0; i < raw.stack.length; i++) {
+                var s = raw.stack[i] || {};
+                var name = (typeof s.symbolName === "string" && s.symbolName.length) ? s.symbolName : null;
+                newStack.push({ symbolName: name });
+            }
+        }
+        ofractalSession.childStack = newStack;
+        var doc = ofractalEnsureDocument();
+        var info = ofractalBuildStackResponse(doc);
+        return ofractalResponse(true, "Stack updated.", { stack: info.stack, docSymbols: info.docSymbols });
+    } catch (error) {
+        return ofractalResponse(false, error.message || String(error));
+    }
+}
+
+function ofractalAddChildrenFromClipboard() {
     try {
         var doc = ofractalEnsureDocument();
         try { doc.selection = null; } catch (eDs) {}
@@ -653,14 +723,13 @@ function ofractalAddChildren() {
         }
         var sessionID = ofractalSession.sessionID || Math.floor(Math.random() * 99999).toString(16);
         ofractalSession.sessionID = sessionID;
-        // Don't replace previously loaded symbols — extend the pool
         var added = 0;
-        var existing = ofractalSession.loadedSymbols.length;
+        var existing = ofractalSession.childStack.length;
         for (var i = 0; i < sel.length; i++) {
             try {
                 var sym = doc.symbols.add(sel[i]);
                 sym.name = "O_Ch_" + sessionID + "_" + (existing + i);
-                ofractalSession.loadedSymbols.push(sym);
+                ofractalSession.childStack.push({ symbolName: sym.name });
                 added++;
             } catch (eS) {}
         }
@@ -669,8 +738,10 @@ function ofractalAddChildren() {
             try { sel[j].remove(); } catch (eR) {}
         }
         app.redraw();
-        return ofractalResponse(true, "Loaded " + added + " child object(s). Pool size: " + ofractalSession.loadedSymbols.length + ".", {
-            count: ofractalSession.loadedSymbols.length,
+        var info = ofractalBuildStackResponse(doc);
+        return ofractalResponse(true, "Loaded " + added + " child object(s). Pool size: " + ofractalSession.childStack.length + ".", {
+            stack: info.stack,
+            docSymbols: info.docSymbols,
             added: added
         });
     } catch (error) {
@@ -684,7 +755,7 @@ function ofractalHandshake() {
             hostName: app.name,
             hostVersion: app.version,
             sessionActive: !!ofractalSession.active,
-            loadedChildren: ofractalSession.loadedSymbols.length
+            loadedChildren: ofractalSession.childStack.length
         });
     } catch (error) {
         return ofractalResponse(false, error.message || String(error));

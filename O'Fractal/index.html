@@ -183,8 +183,12 @@
         <!-- CHILDREN TAB -->
         <section class="panel" data-lockable data-tab-pane="children" hidden>
             <h2>Children</h2>
-            <button id="addChildrenBtn" class="action-btn" type="button">ADD CHILDREN OBJECTS</button>
-            <p id="childrenStatus" class="children-status">No objects loaded</p>
+            <div id="childStack" class="stack-list"></div>
+            <div class="children-actions">
+                <button id="addSlotBtn" class="stack-add-btn" type="button">+ ADD SLOT</button>
+                <button id="addClipboardBtn" class="stack-add-btn" type="button">+ FROM CLIPBOARD</button>
+            </div>
+            <p class="sub">Slots are the random pool. Empty slots are skipped. + ADD SLOT adds an empty row (pick a symbol from the dropdown). + FROM CLIPBOARD pastes copied objects, makes symbols, and appends them as filled slots.</p>
             <label class="field">
                 <span class="field-label">Apply to N levels (from tip)</span>
                 <div class="slider-capsule">

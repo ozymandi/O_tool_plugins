@@ -63,7 +63,8 @@
         currentTab: "fractal",
         presets: [],
         currentPreset: "-- Default --",
-        loadedChildrenCount: 0
+        childStack: [],     // [{ symbolName: string|null }]
+        docSymbols: []      // [name, ...]
     };
 
     var fields = {};
@@ -79,7 +80,8 @@
         cancel: document.getElementById("cancelBtn"),
         bake: document.getElementById("bakeBtn"),
         reset: document.getElementById("resetBtn"),
-        addChildren: document.getElementById("addChildrenBtn"),
+        addSlot: document.getElementById("addSlotBtn"),
+        addClipboard: document.getElementById("addClipboardBtn"),
         savePreset: document.getElementById("savePresetBtn"),
         deletePreset: document.getElementById("deletePresetBtn")
     };
@@ -94,7 +96,7 @@
     var statusDotEl = document.getElementById("statusDot");
     var actionHintEl = document.getElementById("actionHint");
     var presetOptionsEl = document.getElementById("presetOptions");
-    var childrenStatusEl = document.getElementById("childrenStatus");
+    var childStackEl = document.getElementById("childStack");
 
     function safeStorageGet() {
         try { return window.localStorage.getItem(STORAGE_KEY); } catch (e) { return null; }
@@ -526,6 +528,8 @@
             var response = await callHost("ofractalStart", cfg);
             if (!response.ok) throw new Error(response.message || "Could not start.");
             state.active = true;
+            // Refresh child stack so new doc.symbols appear in dropdowns
+            await refreshChildStackFromHost();
             setStatus("success", response.message || "Preview ready.");
             actionHintEl.textContent = "Adjust parameters live. APPLY commits, BAKE TO SYMBOL stores variant, CANCEL discards.";
         } catch (error) {
@@ -604,16 +608,211 @@
         if (state.active) schedulePreviewUpdate();
     }
 
-    async function loadChildren() {
+    // ---------- CHILD STACK ----------
+
+    function renderChildStack() {
+        childStackEl.innerHTML = "";
+        if (!state.childStack.length) {
+            var hint = document.createElement("p");
+            hint.className = "sub";
+            hint.style.margin = "0";
+            hint.textContent = "Empty. Press + ADD SLOT or + FROM CLIPBOARD.";
+            childStackEl.appendChild(hint);
+            return;
+        }
+        for (var i = 0; i < state.childStack.length; i++) {
+            childStackEl.appendChild(buildChildRow(i, state.childStack[i]));
+        }
+    }
+
+    function buildChildRow(index, slot) {
+        var row = document.createElement("div");
+        row.className = "stack-row";
+        row.setAttribute("draggable", "true");
+        row.setAttribute("data-index", String(index));
+
+        var drag = document.createElement("div");
+        drag.className = "stack-drag";
+        drag.textContent = "⋮⋮";
+        drag.title = "Drag to reorder";
+        row.appendChild(drag);
+
+        var dd = document.createElement("div");
+        dd.className = "simple-dropdown stack-symbol-dd";
+
+        var toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "stack-symbol-toggle ui-dropdown-toggle";
+        toggle.setAttribute("aria-haspopup", "listbox");
+        toggle.setAttribute("aria-expanded", "false");
+        var current = slot && slot.symbolName ? slot.symbolName : "";
+        var labelText = document.createElement("span");
+        labelText.className = "symbol-text";
+        labelText.textContent = current ? current : "— empty —";
+        toggle.appendChild(labelText);
+        var chev = document.createElement("span");
+        chev.className = "dropdown-chevron";
+        chev.setAttribute("aria-hidden", "true");
+        chev.innerHTML = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 6.5L8 10L11.5 6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
+        toggle.appendChild(chev);
+        if (!current) toggle.classList.add("is-empty");
+        dd.appendChild(toggle);
+
+        var list = document.createElement("div");
+        list.className = "stack-options ui-dropdown-list";
+        list.setAttribute("role", "listbox");
+
+        var staleNeeded = current && state.docSymbols.indexOf(current) === -1;
+
+        var emptyOpt = document.createElement("div");
+        emptyOpt.className = "stack-option is-empty" + (current ? "" : " is-selected");
+        emptyOpt.setAttribute("data-value", "");
+        emptyOpt.textContent = "— empty —";
+        list.appendChild(emptyOpt);
+
+        for (var s = 0; s < state.docSymbols.length; s++) {
+            var opt = document.createElement("div");
+            opt.className = "stack-option" + (state.docSymbols[s] === current ? " is-selected" : "");
+            opt.setAttribute("data-value", state.docSymbols[s]);
+            opt.textContent = state.docSymbols[s];
+            list.appendChild(opt);
+        }
+        if (staleNeeded) {
+            var staleOpt = document.createElement("div");
+            staleOpt.className = "stack-option is-stale is-selected";
+            staleOpt.setAttribute("data-value", current);
+            staleOpt.textContent = current + " (missing)";
+            list.appendChild(staleOpt);
+        }
+
+        toggle.addEventListener("click", function (event) {
+            event.stopPropagation();
+            if (toggle.disabled) return;
+            if (state.activeDropdown === dd) closeDropdown();
+            else openDropdown(dd);
+        });
+        Array.prototype.forEach.call(list.querySelectorAll(".stack-option"), function (option) {
+            option.addEventListener("click", function (event) {
+                event.stopPropagation();
+                var raw = option.getAttribute("data-value");
+                var name = (raw === "" || raw == null) ? null : raw;
+                closeDropdown();
+                handleAssignChildSymbol(index, name);
+            });
+        });
+        dd.appendChild(list);
+        row.appendChild(dd);
+
+        var remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "stack-remove";
+        remove.title = "Remove slot";
+        remove.innerHTML = '<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
+        remove.addEventListener("click", function () {
+            handleRemoveChildSlot(index);
+        });
+        row.appendChild(remove);
+
+        bindChildRowDrag(row);
+        return row;
+    }
+
+    function bindChildRowDrag(row) {
+        row.addEventListener("dragstart", function (e) {
+            row.classList.add("is-dragging");
+            try { e.dataTransfer.effectAllowed = "move"; } catch (er) {}
+            try { e.dataTransfer.setData("text/plain", row.getAttribute("data-index")); } catch (er2) {}
+        });
+        row.addEventListener("dragend", function () {
+            row.classList.remove("is-dragging");
+            Array.prototype.forEach.call(childStackEl.querySelectorAll(".stack-row"), function (r) {
+                r.classList.remove("drop-before", "drop-after");
+            });
+        });
+        row.addEventListener("dragover", function (e) {
+            if (!childStackEl.querySelector(".is-dragging")) return;
+            e.preventDefault();
+            try { e.dataTransfer.dropEffect = "move"; } catch (er) {}
+            var rect = row.getBoundingClientRect();
+            var before = (e.clientY - rect.top) < rect.height / 2;
+            row.classList.toggle("drop-before", before);
+            row.classList.toggle("drop-after", !before);
+        });
+        row.addEventListener("dragleave", function () {
+            row.classList.remove("drop-before", "drop-after");
+        });
+        row.addEventListener("drop", function (e) {
+            e.preventDefault();
+            var dragging = childStackEl.querySelector(".stack-row.is-dragging");
+            if (!dragging || dragging === row) return;
+            var fromIdx = parseInt(dragging.getAttribute("data-index"), 10);
+            var toIdx = parseInt(row.getAttribute("data-index"), 10);
+            if (isNaN(fromIdx) || isNaN(toIdx)) return;
+            var rect = row.getBoundingClientRect();
+            var before = (e.clientY - rect.top) < rect.height / 2;
+            var insertAt = before ? toIdx : toIdx + 1;
+            if (fromIdx < insertAt) insertAt -= 1;
+            if (fromIdx === insertAt) return;
+            var moved = state.childStack.splice(fromIdx, 1)[0];
+            state.childStack.splice(insertAt, 0, moved);
+            renderChildStack();
+            sendChildStackUpdate();
+        });
+    }
+
+    async function sendChildStackUpdate() {
         if (state.busy) return;
         setBusy(true);
-        setStatus("info", "Loading children from clipboard...");
         try {
-            var response = await callHost("ofractalAddChildren");
-            if (!response.ok) throw new Error(response.message || "Could not load children.");
-            state.loadedChildrenCount = response.count || 0;
-            childrenStatusEl.textContent = "Loaded: " + state.loadedChildrenCount + " object(s)";
-            setStatus("success", response.message || ("Loaded " + state.loadedChildrenCount + " children."));
+            var resp = await callHost("ofractalSetChildStack", { stack: state.childStack });
+            if (!resp.ok) {
+                setStatus("error", resp.message || "Stack update failed.");
+                return;
+            }
+            if (resp.stack) state.childStack = resp.stack;
+            if (resp.docSymbols) state.docSymbols = resp.docSymbols;
+            renderChildStack();
+            if (state.active) schedulePreviewUpdate();
+            setStatus("success", "Children pool updated.");
+        } catch (error) {
+            setStatus("error", error.message);
+        } finally {
+            setBusy(false);
+            refreshControlStates();
+        }
+    }
+
+    function handleAssignChildSymbol(index, symbolName) {
+        if (!state.childStack[index]) return;
+        state.childStack[index] = { symbolName: symbolName };
+        renderChildStack();
+        sendChildStackUpdate();
+    }
+
+    function handleRemoveChildSlot(index) {
+        if (index < 0 || index >= state.childStack.length) return;
+        state.childStack.splice(index, 1);
+        renderChildStack();
+        sendChildStackUpdate();
+    }
+
+    function handleAddChildSlot() {
+        state.childStack.push({ symbolName: null });
+        renderChildStack();
+        sendChildStackUpdate();
+    }
+
+    async function loadChildrenFromClipboard() {
+        if (state.busy) return;
+        setBusy(true);
+        setStatus("info", "Pasting from clipboard...");
+        try {
+            var resp = await callHost("ofractalAddChildrenFromClipboard");
+            if (!resp.ok) throw new Error(resp.message || "Could not load.");
+            state.childStack = resp.stack || state.childStack;
+            state.docSymbols = resp.docSymbols || state.docSymbols;
+            renderChildStack();
+            setStatus("success", resp.message || "Children added.");
             if (state.active) schedulePreviewUpdate();
         } catch (error) {
             setStatus("error", error.message);
@@ -621,6 +820,17 @@
             setBusy(false);
             refreshControlStates();
         }
+    }
+
+    async function refreshChildStackFromHost() {
+        try {
+            var resp = await callHost("ofractalGetChildStack");
+            if (resp.ok) {
+                state.childStack = resp.stack || [];
+                state.docSymbols = resp.docSymbols || [];
+                renderChildStack();
+            }
+        } catch (e) {}
     }
 
     async function initializePanel() {
@@ -631,10 +841,7 @@
                 try { await callHost("ofractalCancel"); } catch (e) {}
             }
             state.active = false;
-            state.loadedChildrenCount = handshake.loadedChildren || 0;
-            childrenStatusEl.textContent = state.loadedChildrenCount > 0
-                ? "Loaded: " + state.loadedChildrenCount + " object(s)"
-                : "No objects loaded";
+            await refreshChildStackFromHost();
             await loadPresets();
             refreshControlStates();
             setStatus("success", handshake.message + " " + handshake.hostName + " " + handshake.hostVersion);
@@ -819,7 +1026,8 @@
     buttons.cancel.addEventListener("click", function () { if (!buttons.cancel.disabled) cancelGenerate(); });
     buttons.bake.addEventListener("click", function () { if (!buttons.bake.disabled) bakeGenerate(); });
     buttons.reset.addEventListener("click", function () { if (!buttons.reset.disabled) rerollSeed(); });
-    buttons.addChildren.addEventListener("click", function () { if (!buttons.addChildren.disabled) loadChildren(); });
+    buttons.addSlot.addEventListener("click", function () { if (!buttons.addSlot.disabled) handleAddChildSlot(); });
+    buttons.addClipboard.addEventListener("click", function () { if (!buttons.addClipboard.disabled) loadChildrenFromClipboard(); });
     buttons.savePreset.addEventListener("click", function () { if (!buttons.savePreset.disabled) savePresetAs(); });
     buttons.deletePreset.addEventListener("click", function () { if (!buttons.deletePreset.disabled) deleteCurrentPreset(); });
 
