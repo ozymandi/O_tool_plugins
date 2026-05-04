@@ -483,6 +483,8 @@ body.is-active .action-row {
     border-radius: var(--radius-control);
     background: var(--panel-2);
 }
+.tab-strip[data-cols="2"] { grid-template-columns: repeat(2, 1fr); }
+.tab-strip[data-cols="4"] { grid-template-columns: repeat(4, 1fr); }
 .tab-btn {
     min-height: 30px;
     height: 30px;
