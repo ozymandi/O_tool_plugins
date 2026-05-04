@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Atractor</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body class="is-idle">
+    <main class="app">
+        <section class="panel" data-lockable>
+            <h2>Targets</h2>
+            <label class="check">
+                <input id="doHandles" type="checkbox" checked>
+                <span>Handles (bezier control points)</span>
+            </label>
+            <label class="check">
+                <input id="doAnchors" type="checkbox">
+                <span>Anchors (the points themselves)</span>
+            </label>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Force</h2>
+            <label class="field">
+                <span class="field-label">Force (negative = push, positive = pull)</span>
+                <div class="slider-capsule">
+                    <input id="force" type="number" min="-200" max="200" step="1" value="0">
+                    <div class="slider-track-area">
+                        <input id="forceRange" type="range" min="-100" max="100" step="1" value="0">
+                    </div>
+                    <button id="forceResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Swirl</h2>
+            <label class="field">
+                <span class="field-label">Swirl angle (deg)</span>
+                <div class="slider-capsule">
+                    <input id="swirl" type="number" min="-3600" max="3600" step="1" value="0">
+                    <div class="slider-track-area">
+                        <input id="swirlRange" type="range" min="-1440" max="1440" step="1" value="0">
+                    </div>
+                    <button id="swirlResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Falloff</h2>
+            <label class="check">
+                <input id="useFalloff" type="checkbox">
+                <span>Enable falloff (limit by distance)</span>
+            </label>
+            <label class="field">
+                <span class="field-label">Radius (px)</span>
+                <div class="slider-capsule">
+                    <input id="radius" type="number" min="1" max="10000" step="1" value="500">
+                    <div class="slider-track-area">
+                        <input id="radiusRange" type="range" min="10" max="2000" step="1" value="500">
+                    </div>
+                    <button id="radiusResetBtn" class="slider-reset-btn" type="button" title="Reset to 500">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+        </section>
+
+        <section class="panel">
+            <div class="action-row">
+                <button id="primaryBtn" class="primary action-btn" type="button">ATTRACT</button>
+                <button id="cancelBtn" class="action-btn" type="button" data-show-active disabled>CANCEL</button>
+                <button id="resetBtn" class="action-btn" type="button" data-show-active disabled>RESET</button>
+            </div>
+            <p class="sub" id="actionHint">Select a single-point path (attractor) and the anchors of other paths to be pulled, then press ATTRACT.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">When falloff is on, a cyan dashed circle marks the radius around the attractor. APPLY commits the deformation. CANCEL restores all anchors and handles to their original positions.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
