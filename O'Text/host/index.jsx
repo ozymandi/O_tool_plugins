@@ -100,6 +100,18 @@ function otextAlign(encodedConfig) {
         // Truncate previous log so each click is a fresh trace
         try { if (otextLogFile.exists) otextLogFile.remove(); } catch (eClr) {}
         otextLog("=== align run, key=" + key + ", target=" + String(targetAlign) + ", frames=" + frames.length + " ===");
+
+        // Channel K: smoke test on a brand-new frame to see if a fresh frame accepts LEFT
+        try {
+            var smoke = doc.textFrames.add();
+            smoke.contents = "_otext_smoke_";
+            smoke.paragraphs[0].justification = Justification.CENTER;
+            var sBefore = String(smoke.paragraphs[0].justification);
+            smoke.paragraphs[0].justification = Justification.LEFT;
+            var sAfter = String(smoke.paragraphs[0].justification);
+            otextLog("K (fresh frame test): CENTER set -> " + sBefore + ", LEFT set -> " + sAfter);
+            smoke.remove();
+        } catch (eK) { otextLog("K err: " + eK.message); }
         try {
             var enumKeys = [];
             for (var ek in Justification) { enumKeys.push(ek); }
