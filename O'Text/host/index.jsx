@@ -1,6 +1,18 @@
 #target illustrator
 #targetengine "OTextCEP"
 
+var OTEXT_DEBUG = true;
+var otextLogFile = new File(Folder.desktop + "/otext_debug.log");
+
+function otextLog(message) {
+    if (!OTEXT_DEBUG) return;
+    try {
+        otextLogFile.open("a");
+        otextLogFile.writeln("[" + new Date().toUTCString() + "] " + message);
+        otextLogFile.close();
+    } catch (e) {}
+}
+
 function otextEscapeString(value) {
     return String(value)
         .replace(/\\/g, "\\\\")
@@ -84,8 +96,23 @@ function otextAlign(encodedConfig) {
         var aligned = 0;
         var verified = 0;
         var diag = [];
+
+        // Truncate previous log so each click is a fresh trace
+        try { if (otextLogFile.exists) otextLogFile.remove(); } catch (eClr) {}
+        otextLog("=== align run, key=" + key + ", target=" + String(targetAlign) + ", frames=" + frames.length + " ===");
+        try {
+            var enumKeys = [];
+            for (var ek in Justification) { enumKeys.push(ek); }
+            otextLog("Justification members: " + enumKeys.join(","));
+        } catch (eEnum) { otextLog("enum dump failed: " + eEnum.message); }
+
         for (var i = 0; i < frames.length; i++) {
             var tf = frames[i];
+
+            otextLog("--- frame " + i + " (typename=" + tf.typename + ", kind=" + (tf.kind || "?") + ") ---");
+            try {
+                otextLog("  before: tf.paragraphs[0].justification=" + String(tf.paragraphs[0].justification));
+            } catch (eBR) { otextLog("  before read failed: " + eBR.message); }
 
             // 1. Snapshot center
             var b1 = tf.geometricBounds;
@@ -119,25 +146,35 @@ function otextAlign(encodedConfig) {
             try {
                 var pA = tf.paragraphs;
                 for (var pAi = 0; pAi < pA.length; pAi++) {
-                    try { pA[pAi].justification = targetAlign; } catch (eA1) {}
+                    try { pA[pAi].justification = targetAlign; otextLog("  A[" + pAi + "] ok"); }
+                    catch (eA1) { otextLog("  A[" + pAi + "] err: " + eA1.message); }
                 }
-            } catch (eA0) {}
+            } catch (eA0) { otextLog("  A0 err: " + eA0.message); }
 
             // Channel B: per-paragraph paragraphAttributes
             try {
                 var pB = tf.paragraphs;
                 for (var pBi = 0; pBi < pB.length; pBi++) {
-                    try { pB[pBi].paragraphAttributes.justification = targetAlign; } catch (eB1) {}
+                    try { pB[pBi].paragraphAttributes.justification = targetAlign; otextLog("  B[" + pBi + "] ok"); }
+                    catch (eB1) { otextLog("  B[" + pBi + "] err: " + eB1.message); }
                 }
-            } catch (eB0) {}
+            } catch (eB0) { otextLog("  B0 err: " + eB0.message); }
 
             // Channel C: story-level
-            try { tf.story.textRange.justification = targetAlign; } catch (eC1) {}
-            try { tf.story.textRange.paragraphAttributes.justification = targetAlign; } catch (eC2) {}
+            try { tf.story.textRange.justification = targetAlign; otextLog("  C1 ok"); }
+            catch (eC1) { otextLog("  C1 err: " + eC1.message); }
+            try { tf.story.textRange.paragraphAttributes.justification = targetAlign; otextLog("  C2 ok"); }
+            catch (eC2) { otextLog("  C2 err: " + eC2.message); }
 
             // Channel D: frame-level
-            try { tf.textRange.justification = targetAlign; } catch (eD1) {}
-            try { tf.textRange.paragraphAttributes.justification = targetAlign; } catch (eD2) {}
+            try { tf.textRange.justification = targetAlign; otextLog("  D1 ok"); }
+            catch (eD1) { otextLog("  D1 err: " + eD1.message); }
+            try { tf.textRange.paragraphAttributes.justification = targetAlign; otextLog("  D2 ok"); }
+            catch (eD2) { otextLog("  D2 err: " + eD2.message); }
+
+            try {
+                otextLog("  after channels: tf.paragraphs[0].justification=" + String(tf.paragraphs[0].justification));
+            } catch (eAR) { otextLog("  after read failed: " + eAR.message); }
 
             // 4. Restore hyphenation
             if (wasHyphenated) {
