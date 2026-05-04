@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'LumeGradient</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body class="is-idle">
+    <main class="app">
+        <section class="panel" data-lockable>
+            <h2>Apply To</h2>
+            <label class="check"><input id="doFill" type="checkbox" checked><span>Fill</span></label>
+            <label class="check"><input id="doStroke" type="checkbox"><span>Stroke</span></label>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Settings</h2>
+            <label class="field">
+                <span class="field-label">Type</span>
+                <div class="mode-segmented" role="group" aria-label="Type">
+                    <button class="mode-seg" type="button" data-type="linear" title="Linear gradient">LINEAR</button>
+                    <button class="mode-seg" type="button" data-type="radial" title="Radial gradient">RADIAL</button>
+                </div>
+                <input id="gradType" type="hidden" value="linear">
+            </label>
+            <label class="field">
+                <span class="field-label">Angle (deg)</span>
+                <div class="slider-capsule">
+                    <input id="angle" type="number" min="-720" max="720" step="1" value="-90">
+                    <div class="slider-track-area"><input id="angleRange" type="range" min="-360" max="360" step="1" value="-90"></div>
+                    <button id="angleResetBtn" class="slider-reset-btn" type="button" title="Reset to -90">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Stops</span>
+                <div class="slider-capsule">
+                    <input id="stops" type="number" min="2" max="20" step="1" value="2">
+                    <div class="slider-track-area"><input id="stopsRange" type="range" min="2" max="10" step="1" value="2"></div>
+                    <button id="stopsResetBtn" class="slider-reset-btn" type="button" title="Reset to 2">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Intensity (%)</span>
+                <div class="slider-capsule">
+                    <input id="intensity" type="number" min="0" max="100" step="1" value="50">
+                    <div class="slider-track-area"><input id="intensityRange" type="range" min="10" max="100" step="1" value="50"></div>
+                    <button id="intensityResetBtn" class="slider-reset-btn" type="button" title="Reset to 50">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+        </section>
+
+        <section class="panel">
+            <div class="action-row">
+                <button id="primaryBtn" class="primary action-btn" type="button">GENERATE</button>
+                <button id="cancelBtn" class="action-btn" type="button" data-show-active disabled>CANCEL</button>
+                <button id="resetBtn" class="action-btn" type="button" data-show-active disabled>RESET</button>
+            </div>
+            <p class="sub" id="actionHint">Select objects with solid fill or stroke, then press GENERATE.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">Light colors darken toward black, dark colors lighten toward white. Intensity controls how far the last stop pushes. APPLY commits, CANCEL restores original colors. RESET restores defaults.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
