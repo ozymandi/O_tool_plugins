@@ -263,6 +263,62 @@ function otextAlign(encodedConfig) {
                 } catch (eF) { otextLog("  F err: " + eF.message); }
             }
 
+            // Channel G: numeric assignments. Maybe enum coercion is broken; try ints.
+            var stillWrongG = false;
+            try { stillWrongG = (tf.paragraphs[0].justification !== targetAlign); } catch (eG0) {}
+            if (stillWrongG) {
+                try {
+                    otextLog("  G: enum numeric values -> LEFT=" + Number(Justification.LEFT) + ", CENTER=" + Number(Justification.CENTER) + ", RIGHT=" + Number(Justification.RIGHT));
+                } catch (eGN) {}
+                var nums = [0, 1, 2, 3, 4, 5, 6, 7];
+                for (var ni = 0; ni < nums.length; ni++) {
+                    try {
+                        tf.paragraphs[0].justification = nums[ni];
+                        otextLog("  G[num=" + nums[ni] + "] -> " + String(tf.paragraphs[0].justification));
+                    } catch (eGn) { otextLog("  G[num=" + nums[ni] + "] err: " + eGn.message); }
+                    if (tf.paragraphs[0].justification === targetAlign) break;
+                }
+            }
+
+            // Channel H: modify the underlying paragraphStyle's attributes,
+            // not the paragraph's. Some override states can only be cleared
+            // by changing the source attribute that they shadow.
+            var stillWrongH = false;
+            try { stillWrongH = (tf.paragraphs[0].justification !== targetAlign); } catch (eH0) {}
+            if (stillWrongH) {
+                try {
+                    var pStyle = tf.paragraphs[0].paragraphStyle;
+                    otextLog("  H: paragraphStyle name='" + pStyle.name + "' before justification=" + String(pStyle.paragraphAttributes.justification));
+                    pStyle.paragraphAttributes.justification = targetAlign;
+                    otextLog("  H: after style mod, paragraph justification=" + String(tf.paragraphs[0].justification));
+                } catch (eH) { otextLog("  H err: " + eH.message); }
+            }
+
+            // Channel I: toggle text frame kind to force a re-evaluation pass
+            var stillWrongI = false;
+            try { stillWrongI = (tf.paragraphs[0].justification !== targetAlign); } catch (eI0) {}
+            if (stillWrongI) {
+                try {
+                    var origKind = tf.kind;
+                    otextLog("  I: kind toggle, originalKind=" + String(origKind));
+                    if (origKind === TextType.POINTTEXT) {
+                        try { tf.kind = TextType.AREATEXT; otextLog("  I: -> AREATEXT ok"); }
+                        catch (eIa) { otextLog("  I: -> AREATEXT err: " + eIa.message); }
+                        try { tf.paragraphs[0].justification = targetAlign; } catch (eIs) {}
+                        otextLog("  I: after AREA set, paragraph justification=" + String(tf.paragraphs[0].justification));
+                        try { tf.kind = TextType.POINTTEXT; otextLog("  I: back to POINTTEXT"); }
+                        catch (eIb) { otextLog("  I: back to POINTTEXT err: " + eIb.message); }
+                        otextLog("  I: after revert, paragraph justification=" + String(tf.paragraphs[0].justification));
+                    } else {
+                        try { tf.kind = TextType.POINTTEXT; otextLog("  I: -> POINTTEXT ok"); }
+                        catch (eIc) { otextLog("  I: -> POINTTEXT err: " + eIc.message); }
+                        try { tf.paragraphs[0].justification = targetAlign; } catch (eIs2) {}
+                        try { tf.kind = origKind; otextLog("  I: back to original"); } catch (eId) {}
+                        otextLog("  I: after revert, paragraph justification=" + String(tf.paragraphs[0].justification));
+                    }
+                } catch (eI) { otextLog("  I err: " + eI.message); }
+            }
+
             // Final read
             try {
                 otextLog("  FINAL: tf.paragraphs[0].justification=" + String(tf.paragraphs[0].justification));
