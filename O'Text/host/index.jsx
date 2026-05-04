@@ -176,6 +176,51 @@ function otextAlign(encodedConfig) {
                 otextLog("  after channels: tf.paragraphs[0].justification=" + String(tf.paragraphs[0].justification));
             } catch (eAR) { otextLog("  after read failed: " + eAR.message); }
 
+            // Channel E: menu-command fallback. Some Illustrator versions silently
+            // refuse Justification.LEFT via scripting. The Type > Paragraph menu
+            // commands hit a different code path and do work.
+            var stillWrong = false;
+            try { stillWrong = (tf.paragraphs[0].justification !== targetAlign); } catch (eCheck) {}
+            if (stillWrong) {
+                var menuCandidates = [];
+                if (key === "L") menuCandidates = ["Left Justify", "Justify Left", "JustifyLeft", "left", "AI Style: Type Align Left"];
+                else if (key === "C") menuCandidates = ["Center Justify", "Justify Center", "JustifyCenter", "center"];
+                else if (key === "R") menuCandidates = ["Right Justify", "Justify Right", "JustifyRight", "right"];
+
+                // Save current document selection so we can restore it
+                var savedSel = [];
+                try {
+                    var docSel = doc.selection;
+                    if (docSel && docSel.length) {
+                        for (var sv = 0; sv < docSel.length; sv++) savedSel.push(docSel[sv]);
+                    }
+                } catch (eSv) {}
+
+                try { doc.selection = null; } catch (eDs) {}
+                try { tf.selected = true; } catch (eSel) { otextLog("  E: select frame err: " + eSel.message); }
+
+                for (var mci = 0; mci < menuCandidates.length; mci++) {
+                    var cmd = menuCandidates[mci];
+                    var pre;
+                    try { pre = String(tf.paragraphs[0].justification); } catch (ePre) { pre = "?"; }
+                    try { app.executeMenuCommand(cmd); otextLog("  E[" + cmd + "] cmd-ok"); }
+                    catch (eM) { otextLog("  E[" + cmd + "] cmd-err: " + eM.message); }
+                    var post;
+                    try { post = String(tf.paragraphs[0].justification); } catch (ePost) { post = "?"; }
+                    otextLog("  E[" + cmd + "] " + pre + " -> " + post);
+                    if (post === String(targetAlign)) {
+                        otextLog("  E winner: '" + cmd + "'");
+                        break;
+                    }
+                }
+
+                // Restore selection
+                try { doc.selection = null; } catch (eRs) {}
+                for (var rs = 0; rs < savedSel.length; rs++) {
+                    try { savedSel[rs].selected = true; } catch (eRr) {}
+                }
+            }
+
             // 4. Restore hyphenation
             if (wasHyphenated) {
                 try { tf.story.textRange.paragraphAttributes.hyphenation = true; } catch (eR) {}
