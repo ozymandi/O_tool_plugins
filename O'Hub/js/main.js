@@ -43,9 +43,9 @@
         { id: "com.otool.odeselect.panel",   name: "O'Deselect",    tagline: "Refined deselection",                               cat: "utility",    icon: "DS" },
         { id: "com.otool.otext.panel",       name: "O'Text",        tagline: "Smart text alignment without shifting",             cat: "utility",    icon: "TX" },
 
-        // REFERENCE
-        { id: "com.otool.ozometrix.panel",   name: "O'Zometrix",    tagline: "Isometric projections + extrude",                   cat: "reference",  icon: "ZX" },
-        { id: "com.otool.ogridgen.panel",    name: "O'GridGen",     tagline: "Procedural grid generation",                        cat: "reference",  icon: "GG" }
+        // Reference plugins folded into their natural categories
+        { id: "com.otool.ozometrix.panel",   name: "O'Zometrix",    tagline: "Isometric projections + extrude",                   cat: "geometry",   icon: "ZX" },
+        { id: "com.otool.ogridgen.panel",    name: "O'GridGen",     tagline: "Procedural grid generation",                        cat: "generate",   icon: "GG" }
     ];
 
     var CATEGORIES = [
@@ -54,8 +54,7 @@
         { id: "distribute", label: "Distribute" },
         { id: "color",      label: "Color" },
         { id: "generate",   label: "Generate" },
-        { id: "utility",    label: "Utility" },
-        { id: "reference",  label: "Reference" }
+        { id: "utility",    label: "Utility" }
     ];
 
     var state = {

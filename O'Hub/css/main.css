@@ -558,7 +558,6 @@ input:focus-visible, button:focus-visible, .custom-select:focus-visible {
 .plugin-icon[data-cat="color"]      { background: linear-gradient(180deg, #6b3a4d 0%, #522c3a 100%); color: #ffcfdf; }
 .plugin-icon[data-cat="generate"]   { background: linear-gradient(180deg, #5a5a3a 0%, #44442c 100%); color: #efeac8; }
 .plugin-icon[data-cat="utility"]    { background: linear-gradient(180deg, #4a4a4a 0%, #3a3a3a 100%); color: #d8d8d8; }
-.plugin-icon[data-cat="reference"]  { background: linear-gradient(180deg, #6b5a3a 0%, #52442c 100%); color: #ffe8b8; }
 
 .plugin-info {
     min-width: 0;
