@@ -57,8 +57,7 @@ PluginName/
 - [x] O'Scatter
 - [~] O'Scatter_Symbol (skipped — superseded by O'Scatter slot stack)
 - [x] O'BakeUI
-- [ ] O'Replace_Color
-- [ ] O'Replace_Light
+- [x] O'Replace (combines O'Replace_Color + O'Replace_Light as tabs)
 - [ ] O'LumeGradient
 - [ ] O'Zometrix (вже існує як референс)
 - [ ] O'GridGen (вже існує як референс)

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Replace</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body class="is-idle">
+    <main class="app">
+        <section class="panel">
+            <div class="tab-strip" role="tablist">
+                <button class="tab-btn is-active" type="button" data-tab="color">COLOR</button>
+                <button class="tab-btn" type="button" data-tab="light">LIGHT</button>
+            </div>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Geometry</h2>
+            <label class="field">
+                <span class="field-label">Fitting</span>
+                <div class="mode-segmented" role="group" aria-label="Fitting" data-cols="2">
+                    <button class="mode-seg" type="button" data-fitting="stretch" title="Stretch (fill bounds)">STRETCH</button>
+                    <button class="mode-seg" type="button" data-fitting="proportional" title="Proportional (fit inside)">PROPORTIONAL</button>
+                </div>
+                <input id="fitting" type="hidden" value="proportional">
+            </label>
+            <label class="check">
+                <input id="deleteOriginals" type="checkbox">
+                <span>Delete originals on apply</span>
+            </label>
+        </section>
+
+        <!-- COLOR TAB -->
+        <section class="panel" data-lockable data-tab-pane="color">
+            <h2>Color (Pure Replace)</h2>
+            <p class="sub">Each target is replaced 1:1 — clipboard fits the target's bounds and inherits the target's fill color. No brightness modulation.</p>
+        </section>
+
+        <!-- LIGHT TAB -->
+        <section class="panel" data-lockable data-tab-pane="light" hidden>
+            <h2>Light (Brightness-modulated)</h2>
+            <p class="sub">Each replacement is scaled by the target's perceived brightness — white targets stay full, dark ones shrink. Color is inherited.</p>
+            <label class="field">
+                <span class="field-label">Max scale (white target, %)</span>
+                <div class="slider-capsule">
+                    <input id="maxPct" type="number" min="0" max="500" step="1" value="100">
+                    <div class="slider-track-area"><input id="maxPctRange" type="range" min="0" max="200" step="1" value="100"></div>
+                    <button id="maxPctResetBtn" class="slider-reset-btn" type="button" title="Reset to 100">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Min scale (black target, %)</span>
+                <div class="slider-capsule">
+                    <input id="minPct" type="number" min="0" max="500" step="1" value="10">
+                    <div class="slider-track-area"><input id="minPctRange" type="range" min="0" max="200" step="1" value="10"></div>
+                    <button id="minPctResetBtn" class="slider-reset-btn" type="button" title="Reset to 10">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Black point (0–255)</span>
+                <div class="slider-capsule">
+                    <input id="blackPt" type="number" min="0" max="255" step="1" value="0">
+                    <div class="slider-track-area"><input id="blackPtRange" type="range" min="0" max="255" step="1" value="0"></div>
+                    <button id="blackPtResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Gamma</span>
+                <div class="slider-capsule">
+                    <input id="gamma" type="number" min="0.1" max="5" step="0.05" value="1.0">
+                    <div class="slider-track-area"><input id="gammaRange" type="range" min="0.1" max="3.0" step="0.05" value="1.0"></div>
+                    <button id="gammaResetBtn" class="slider-reset-btn" type="button" title="Reset to 1.0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">White point (0–255)</span>
+                <div class="slider-capsule">
+                    <input id="whitePt" type="number" min="0" max="255" step="1" value="255">
+                    <div class="slider-track-area"><input id="whitePtRange" type="range" min="0" max="255" step="1" value="255"></div>
+                    <button id="whitePtResetBtn" class="slider-reset-btn" type="button" title="Reset to 255">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+        </section>
+
+        <section class="panel">
+            <div class="action-row">
+                <button id="primaryBtn" class="primary action-btn" type="button">REPLACE</button>
+                <button id="cancelBtn" class="action-btn" type="button" data-show-active disabled>CANCEL</button>
+                <button id="resetBtn" class="action-btn" type="button" data-show-active disabled>RESET</button>
+            </div>
+            <p class="sub" id="actionHint">Copy a vector object (Ctrl+C), select target paths/groups, then press REPLACE.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">RESET restores the LIGHT tab defaults. APPLY commits the preview (and removes originals if checked).</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
