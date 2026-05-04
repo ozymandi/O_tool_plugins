@@ -49,7 +49,7 @@ PluginName/
 - [x] O'Math
 - [x] O'Vertex
 - [x] O'Voron
-- [ ] O'Symbol
+- [x] O'Symbol
 - [ ] O'Text
 - [ ] O'Atractor
 - [ ] O'Fractal
