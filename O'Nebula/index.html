@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Nebula</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+    <main class="app">
+        <section class="panel">
+            <h2>Stroke Width</h2>
+            <div class="row-two">
+                <label class="field">
+                    <span class="field-label">Min (pt)</span>
+                    <input id="minWidth" type="number" min="0.01" max="50" step="0.1" value="0.1">
+                </label>
+                <label class="field">
+                    <span class="field-label">Max (pt)</span>
+                    <input id="maxWidth" type="number" min="0.01" max="50" step="0.1" value="1.0">
+                </label>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Opacity (%)</h2>
+            <div class="row-two">
+                <label class="field">
+                    <span class="field-label">Min</span>
+                    <input id="minOpacity" type="number" min="0" max="100" step="1" value="30">
+                </label>
+                <label class="field">
+                    <span class="field-label">Max</span>
+                    <input id="maxOpacity" type="number" min="0" max="100" step="1" value="100">
+                </label>
+            </div>
+        </section>
+
+        <section class="panel">
+            <button id="stylizeBtn" class="primary action-btn" type="button">STYLIZE</button>
+            <p class="sub">Each selected path gets a random stroke width and opacity inside the ranges. Recurses into groups. Run again to re-roll.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">Tip: Min &gt; Max is auto-fixed (the lower of the two becomes Min). Pseudo-3D depth-of-field look on dense line work.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
