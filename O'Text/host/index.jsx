@@ -82,6 +82,7 @@ function otextAlign(encodedConfig) {
         }
 
         var aligned = 0;
+        var verified = 0;
         for (var i = 0; i < frames.length; i++) {
             var tf = frames[i];
 
@@ -99,22 +100,55 @@ function otextAlign(encodedConfig) {
                 }
             } catch (eH) {}
 
-            // 3. Apply justification through every available channel — no early break,
-            //    because some channels can silently no-op for LEFT while accepting CENTER/RIGHT.
+            // 3. Apply justification — through every channel, no early break.
+            //    For LEFT specifically, force a CENTER pass first to break any
+            //    "sticky-non-LEFT" state Illustrator silently keeps on the paragraph.
+            if (key === "L") {
+                try { tf.textRange.justification = Justification.CENTER; } catch (eF1) {}
+                try { tf.story.textRange.justification = Justification.CENTER; } catch (eF2) {}
+                try {
+                    var preParas = tf.paragraphs;
+                    for (var pi = 0; pi < preParas.length; pi++) {
+                        try { preParas[pi].justification = Justification.CENTER; } catch (eFp) {}
+                    }
+                } catch (eFa) {}
+            }
+
+            // Channel A: per-paragraph top-level setter
             try {
-                var paragraphs = tf.story.paragraphs;
-                for (var pp = 0; pp < paragraphs.length; pp++) {
-                    try { paragraphs[pp].paragraphAttributes.justification = targetAlign; } catch (eP1) {}
+                var pA = tf.paragraphs;
+                for (var pAi = 0; pAi < pA.length; pAi++) {
+                    try { pA[pAi].justification = targetAlign; } catch (eA1) {}
                 }
-            } catch (eP0) {}
-            try { tf.story.textRange.paragraphAttributes.justification = targetAlign; } catch (eP2) {}
-            try { tf.story.textRange.justification = targetAlign; } catch (eP3) {}
-            try { tf.textRange.justification = targetAlign; } catch (eP4) {}
+            } catch (eA0) {}
+
+            // Channel B: per-paragraph paragraphAttributes
+            try {
+                var pB = tf.paragraphs;
+                for (var pBi = 0; pBi < pB.length; pBi++) {
+                    try { pB[pBi].paragraphAttributes.justification = targetAlign; } catch (eB1) {}
+                }
+            } catch (eB0) {}
+
+            // Channel C: story-level
+            try { tf.story.textRange.justification = targetAlign; } catch (eC1) {}
+            try { tf.story.textRange.paragraphAttributes.justification = targetAlign; } catch (eC2) {}
+
+            // Channel D: frame-level
+            try { tf.textRange.justification = targetAlign; } catch (eD1) {}
+            try { tf.textRange.paragraphAttributes.justification = targetAlign; } catch (eD2) {}
 
             // 4. Restore hyphenation
             if (wasHyphenated) {
                 try { tf.story.textRange.paragraphAttributes.hyphenation = true; } catch (eR) {}
             }
+
+            // Verify the change actually persisted on the paragraph
+            try {
+                if (tf.paragraphs.length > 0 && tf.paragraphs[0].justification === targetAlign) {
+                    verified++;
+                }
+            } catch (eV) {}
 
             app.redraw();
 
@@ -132,7 +166,8 @@ function otextAlign(encodedConfig) {
         app.redraw();
 
         var label = (key === "L") ? "left" : (key === "C") ? "center" : "right";
-        return otextResponse(true, "Aligned " + aligned + " frame(s) " + label + ".", { count: aligned });
+        var summary = "Aligned " + verified + "/" + aligned + " frame(s) " + label + ".";
+        return otextResponse(true, summary, { count: aligned, verified: verified });
     } catch (error) {
         return otextResponse(false, error.message || String(error));
     }
