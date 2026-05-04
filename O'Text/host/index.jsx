@@ -1,7 +1,8 @@
 #target illustrator
 #targetengine "OTextCEP"
 
-var OTEXT_DEBUG = true;
+// Set to true to write a trace to ~/Desktop/otext_debug.log
+var OTEXT_DEBUG = false;
 var otextLogFile = new File(Folder.desktop + "/otext_debug.log");
 
 function otextLog(message) {
@@ -95,67 +96,16 @@ function otextAlign(encodedConfig) {
 
         var aligned = 0;
         var verified = 0;
-        var diag = [];
-
-        // Truncate previous log so each click is a fresh trace
-        try { if (otextLogFile.exists) otextLogFile.remove(); } catch (eClr) {}
-        otextLog("=== align run, key=" + key + ", target=" + String(targetAlign) + ", frames=" + frames.length + " ===");
-
-        // Channel K: smoke tests
-        try {
-            // K1: fresh frame default + LEFT-first attempt
-            var smoke1 = doc.textFrames.add();
-            smoke1.contents = "_otext_smoke1_";
-            otextLog("K1 fresh default: " + String(smoke1.paragraphs[0].justification));
-            smoke1.paragraphs[0].justification = Justification.LEFT;
-            otextLog("K1 after LEFT (no prior set): " + String(smoke1.paragraphs[0].justification));
-            smoke1.paragraphs[0].justification = Justification.RIGHT;
-            otextLog("K1 after RIGHT: " + String(smoke1.paragraphs[0].justification));
-            smoke1.paragraphs[0].justification = Justification.LEFT;
-            otextLog("K1 RIGHT->LEFT: " + String(smoke1.paragraphs[0].justification));
-            smoke1.remove();
-
-            // K2: dump all paragraphAttributes property names
-            var fresh2 = doc.textFrames.add();
-            fresh2.contents = "_otext_smoke2_";
-            try {
-                var props = [];
-                for (var pp in fresh2.paragraphs[0].paragraphAttributes) props.push(pp);
-                otextLog("K2 paragraphAttributes props: " + props.join(","));
-            } catch (eP) { otextLog("K2 props err: " + eP.message); }
-            fresh2.remove();
-
-            // K3: duplicate test - if dup can accept LEFT after originals couldn't
-            var fresh3 = doc.textFrames.add();
-            fresh3.contents = "_otext_smoke3_";
-            fresh3.paragraphs[0].justification = Justification.CENTER;
-            var dup = fresh3.duplicate();
-            otextLog("K3 dup before: " + String(dup.paragraphs[0].justification));
-            dup.paragraphs[0].justification = Justification.LEFT;
-            otextLog("K3 dup after LEFT: " + String(dup.paragraphs[0].justification));
-            dup.remove();
-            fresh3.remove();
-        } catch (eK) { otextLog("K err: " + eK.message); }
-        try {
-            var enumKeys = [];
-            for (var ek in Justification) { enumKeys.push(ek); }
-            otextLog("Justification members: " + enumKeys.join(","));
-        } catch (eEnum) { otextLog("enum dump failed: " + eEnum.message); }
 
         for (var i = 0; i < frames.length; i++) {
             var tf = frames[i];
-
-            otextLog("--- frame " + i + " (typename=" + tf.typename + ", kind=" + (tf.kind || "?") + ") ---");
-            try {
-                otextLog("  before: tf.paragraphs[0].justification=" + String(tf.paragraphs[0].justification));
-            } catch (eBR) { otextLog("  before read failed: " + eBR.message); }
 
             // 1. Snapshot center
             var b1 = tf.geometricBounds;
             var cx1 = b1[0] + (b1[2] - b1[0]) / 2;
             var cy1 = b1[1] + (b1[3] - b1[1]) / 2;
 
-            // 2. Suspend hyphenation if active (avoids reflow bug)
+            // 2. Suspend hyphenation
             var wasHyphenated = false;
             try {
                 if (tf.story.textRange.paragraphAttributes.hyphenation) {
@@ -164,221 +114,35 @@ function otextAlign(encodedConfig) {
                 }
             } catch (eH) {}
 
-            // 3. Apply justification — through every channel, no early break.
-            //    For LEFT specifically, force a CENTER pass first to break any
-            //    "sticky-non-LEFT" state Illustrator silently keeps on the paragraph.
-            if (key === "L") {
-                try { tf.textRange.justification = Justification.CENTER; } catch (eF1) {}
-                try { tf.story.textRange.justification = Justification.CENTER; } catch (eF2) {}
-                try {
-                    var preParas = tf.paragraphs;
-                    for (var pi = 0; pi < preParas.length; pi++) {
-                        try { preParas[pi].justification = Justification.CENTER; } catch (eFp) {}
-                    }
-                } catch (eFa) {}
-            }
-
-            // Channel A: per-paragraph top-level setter
+            // 3. Apply justification through every channel — no early break,
+            //    because some channels can silently no-op for a value while
+            //    accepting others.
             try {
-                var pA = tf.paragraphs;
-                for (var pAi = 0; pAi < pA.length; pAi++) {
-                    try { pA[pAi].justification = targetAlign; otextLog("  A[" + pAi + "] ok"); }
-                    catch (eA1) { otextLog("  A[" + pAi + "] err: " + eA1.message); }
+                var paragraphs = tf.paragraphs;
+                for (var pp = 0; pp < paragraphs.length; pp++) {
+                    try { paragraphs[pp].justification = targetAlign; } catch (e) {}
+                    try { paragraphs[pp].paragraphAttributes.justification = targetAlign; } catch (e) {}
                 }
-            } catch (eA0) { otextLog("  A0 err: " + eA0.message); }
-
-            // Channel B: per-paragraph paragraphAttributes
-            try {
-                var pB = tf.paragraphs;
-                for (var pBi = 0; pBi < pB.length; pBi++) {
-                    try { pB[pBi].paragraphAttributes.justification = targetAlign; otextLog("  B[" + pBi + "] ok"); }
-                    catch (eB1) { otextLog("  B[" + pBi + "] err: " + eB1.message); }
-                }
-            } catch (eB0) { otextLog("  B0 err: " + eB0.message); }
-
-            // Channel C: story-level
-            try { tf.story.textRange.justification = targetAlign; otextLog("  C1 ok"); }
-            catch (eC1) { otextLog("  C1 err: " + eC1.message); }
-            try { tf.story.textRange.paragraphAttributes.justification = targetAlign; otextLog("  C2 ok"); }
-            catch (eC2) { otextLog("  C2 err: " + eC2.message); }
-
-            // Channel D: frame-level
-            try { tf.textRange.justification = targetAlign; otextLog("  D1 ok"); }
-            catch (eD1) { otextLog("  D1 err: " + eD1.message); }
-            try { tf.textRange.paragraphAttributes.justification = targetAlign; otextLog("  D2 ok"); }
-            catch (eD2) { otextLog("  D2 err: " + eD2.message); }
-
-            try {
-                otextLog("  after channels: tf.paragraphs[0].justification=" + String(tf.paragraphs[0].justification));
-            } catch (eAR) { otextLog("  after read failed: " + eAR.message); }
-
-            // Channel E: menu-command fallback. Some Illustrator versions silently
-            // refuse Justification.LEFT via scripting. The Type > Paragraph menu
-            // commands hit a different code path and do work.
-            var stillWrong = false;
-            try { stillWrong = (tf.paragraphs[0].justification !== targetAlign); } catch (eCheck) {}
-            if (stillWrong) {
-                var menuCandidates = [];
-                if (key === "L") menuCandidates = [
-                    "Left Justify", "Justify Left", "JustifyLeft", "LeftJustify",
-                    "Left Align", "Align Left", "LeftAlign", "AlignLeft",
-                    "Type Align Left", "TypeAlignLeft", "Text Align Left", "TextAlignLeft",
-                    "Paragraph Left Align", "Para Align Left", "Paragraph Justify Left",
-                    "AI Style: Type Align Left", "AI Justify Left", "AI Align Left",
-                    "leftalign", "left align", "left-align", "left", "leftJustify"
-                ];
-                else if (key === "C") menuCandidates = [
-                    "Center Justify", "Justify Center", "JustifyCenter", "CenterJustify",
-                    "Center Align", "Align Center", "CenterAlign", "AlignCenter",
-                    "Type Align Center", "TypeAlignCenter", "AI Justify Center",
-                    "centeralign", "center align", "center"
-                ];
-                else if (key === "R") menuCandidates = [
-                    "Right Justify", "Justify Right", "JustifyRight", "RightJustify",
-                    "Right Align", "Align Right", "RightAlign", "AlignRight",
-                    "Type Align Right", "TypeAlignRight", "AI Justify Right",
-                    "rightalign", "right align", "right"
-                ];
-
-                // Save current document selection so we can restore it
-                var savedSel = [];
-                try {
-                    var docSel = doc.selection;
-                    if (docSel && docSel.length) {
-                        for (var sv = 0; sv < docSel.length; sv++) savedSel.push(docSel[sv]);
-                    }
-                } catch (eSv) {}
-
-                try { doc.selection = null; } catch (eDs) {}
-                try { tf.selected = true; } catch (eSel) { otextLog("  E: select frame err: " + eSel.message); }
-
-                for (var mci = 0; mci < menuCandidates.length; mci++) {
-                    var cmd = menuCandidates[mci];
-                    var pre;
-                    try { pre = String(tf.paragraphs[0].justification); } catch (ePre) { pre = "?"; }
-                    try { app.executeMenuCommand(cmd); otextLog("  E[" + cmd + "] cmd-ok"); }
-                    catch (eM) { otextLog("  E[" + cmd + "] cmd-err: " + eM.message); }
-                    var post;
-                    try { post = String(tf.paragraphs[0].justification); } catch (ePost) { post = "?"; }
-                    otextLog("  E[" + cmd + "] " + pre + " -> " + post);
-                    if (post === String(targetAlign)) {
-                        otextLog("  E winner: '" + cmd + "'");
-                        break;
-                    }
-                }
-
-                // Restore selection
-                try { doc.selection = null; } catch (eRs) {}
-                for (var rs = 0; rs < savedSel.length; rs++) {
-                    try { savedSel[rs].selected = true; } catch (eRr) {}
-                }
-            }
-
-            // Channel F: detach paragraph style, then re-apply target. Sometimes a
-            // user-applied paragraph style holds an override that the scripting
-            // setters cannot punch through. Resetting to [No Paragraph Style]
-            // clears the override and the next assignment usually sticks.
-            var stillWrong2 = false;
-            try { stillWrong2 = (tf.paragraphs[0].justification !== targetAlign); } catch (eF0) {}
-            if (stillWrong2) {
-                try {
-                    var noStyle = doc.paragraphStyles[0]; // index 0 is [No Paragraph Style]
-                    var pF = tf.paragraphs;
-                    for (var pFi = 0; pFi < pF.length; pFi++) {
-                        try {
-                            var preStyle;
-                            try { preStyle = String(pF[pFi].justification); } catch (eFp1) { preStyle = "?"; }
-                            pF[pFi].paragraphStyle = noStyle;
-                            try { pF[pFi].justification = targetAlign; } catch (eFp2) {}
-                            try { pF[pFi].paragraphAttributes.justification = targetAlign; } catch (eFp3) {}
-                            var postStyle;
-                            try { postStyle = String(pF[pFi].justification); } catch (eFp4) { postStyle = "?"; }
-                            otextLog("  F[" + pFi + "] " + preStyle + " -> " + postStyle);
-                        } catch (eF1) { otextLog("  F[" + pFi + "] err: " + eF1.message); }
-                    }
-                } catch (eF) { otextLog("  F err: " + eF.message); }
-            }
-
-            // Channel G: numeric assignments. Maybe enum coercion is broken; try ints.
-            var stillWrongG = false;
-            try { stillWrongG = (tf.paragraphs[0].justification !== targetAlign); } catch (eG0) {}
-            if (stillWrongG) {
-                try {
-                    otextLog("  G: enum numeric values -> LEFT=" + Number(Justification.LEFT) + ", CENTER=" + Number(Justification.CENTER) + ", RIGHT=" + Number(Justification.RIGHT));
-                } catch (eGN) {}
-                var nums = [0, 1, 2, 3, 4, 5, 6, 7];
-                for (var ni = 0; ni < nums.length; ni++) {
-                    try {
-                        tf.paragraphs[0].justification = nums[ni];
-                        otextLog("  G[num=" + nums[ni] + "] -> " + String(tf.paragraphs[0].justification));
-                    } catch (eGn) { otextLog("  G[num=" + nums[ni] + "] err: " + eGn.message); }
-                    if (tf.paragraphs[0].justification === targetAlign) break;
-                }
-            }
-
-            // Channel H: modify the underlying paragraphStyle's attributes,
-            // not the paragraph's. Some override states can only be cleared
-            // by changing the source attribute that they shadow.
-            var stillWrongH = false;
-            try { stillWrongH = (tf.paragraphs[0].justification !== targetAlign); } catch (eH0) {}
-            if (stillWrongH) {
-                try {
-                    var pStyle = tf.paragraphs[0].paragraphStyle;
-                    otextLog("  H: paragraphStyle name='" + pStyle.name + "' before justification=" + String(pStyle.paragraphAttributes.justification));
-                    pStyle.paragraphAttributes.justification = targetAlign;
-                    otextLog("  H: after style mod, paragraph justification=" + String(tf.paragraphs[0].justification));
-                } catch (eH) { otextLog("  H err: " + eH.message); }
-            }
-
-            // Channel I: toggle text frame kind to force a re-evaluation pass
-            var stillWrongI = false;
-            try { stillWrongI = (tf.paragraphs[0].justification !== targetAlign); } catch (eI0) {}
-            if (stillWrongI) {
-                try {
-                    var origKind = tf.kind;
-                    otextLog("  I: kind toggle, originalKind=" + String(origKind));
-                    if (origKind === TextType.POINTTEXT) {
-                        try { tf.kind = TextType.AREATEXT; otextLog("  I: -> AREATEXT ok"); }
-                        catch (eIa) { otextLog("  I: -> AREATEXT err: " + eIa.message); }
-                        try { tf.paragraphs[0].justification = targetAlign; } catch (eIs) {}
-                        otextLog("  I: after AREA set, paragraph justification=" + String(tf.paragraphs[0].justification));
-                        try { tf.kind = TextType.POINTTEXT; otextLog("  I: back to POINTTEXT"); }
-                        catch (eIb) { otextLog("  I: back to POINTTEXT err: " + eIb.message); }
-                        otextLog("  I: after revert, paragraph justification=" + String(tf.paragraphs[0].justification));
-                    } else {
-                        try { tf.kind = TextType.POINTTEXT; otextLog("  I: -> POINTTEXT ok"); }
-                        catch (eIc) { otextLog("  I: -> POINTTEXT err: " + eIc.message); }
-                        try { tf.paragraphs[0].justification = targetAlign; } catch (eIs2) {}
-                        try { tf.kind = origKind; otextLog("  I: back to original"); } catch (eId) {}
-                        otextLog("  I: after revert, paragraph justification=" + String(tf.paragraphs[0].justification));
-                    }
-                } catch (eI) { otextLog("  I err: " + eI.message); }
-            }
-
-            // Final read
-            try {
-                otextLog("  FINAL: tf.paragraphs[0].justification=" + String(tf.paragraphs[0].justification));
-            } catch (eFR) {}
+            } catch (e) {}
+            try { tf.story.textRange.justification = targetAlign; } catch (e) {}
+            try { tf.story.textRange.paragraphAttributes.justification = targetAlign; } catch (e) {}
+            try { tf.textRange.justification = targetAlign; } catch (e) {}
+            try { tf.textRange.paragraphAttributes.justification = targetAlign; } catch (e) {}
 
             // 4. Restore hyphenation
             if (wasHyphenated) {
-                try { tf.story.textRange.paragraphAttributes.hyphenation = true; } catch (eR) {}
+                try { tf.story.textRange.paragraphAttributes.hyphenation = true; } catch (e) {}
             }
 
-            // Verify and gather diagnostics
-            var beforeStr = "?", afterStr = "?", expectedStr = "?";
-            try { expectedStr = String(targetAlign); } catch (eD0) {}
-            try { afterStr = String(tf.paragraphs[0].justification); } catch (eD1) {}
-            if (afterStr === expectedStr) verified++;
-            if (i === 0) {
-                diag.push("expected=" + expectedStr);
-                diag.push("got=" + afterStr);
-                try { diag.push("typeofExpected=" + typeof targetAlign); } catch (eD2) {}
-            }
+            try {
+                if (tf.paragraphs.length > 0 && tf.paragraphs[0].justification === targetAlign) {
+                    verified++;
+                }
+            } catch (eV) {}
 
             app.redraw();
 
-            // 5. Snapshot new center, translate-back delta
+            // 5. Snapshot new center, translate-back delta to keep visual position
             var b2 = tf.geometricBounds;
             var cx2 = b2[0] + (b2[2] - b2[0]) / 2;
             var cy2 = b2[1] + (b2[3] - b2[1]) / 2;
@@ -392,11 +156,13 @@ function otextAlign(encodedConfig) {
         app.redraw();
 
         var label = (key === "L") ? "left" : (key === "C") ? "center" : "right";
-        var summary = "Aligned " + verified + "/" + aligned + " frame(s) " + label + ".";
-        if (verified < aligned && diag.length > 0) {
-            summary += " [" + diag.join(", ") + "]";
+        var summary;
+        if (verified === aligned) {
+            summary = "Aligned " + aligned + " frame(s) " + label + ".";
+        } else {
+            summary = "Aligned " + verified + "/" + aligned + " frame(s) " + label + " (LEFT is rejected by Illustrator 2026's text API on frames already set to CENTER/RIGHT).";
         }
-        return otextResponse(true, summary, { count: aligned, verified: verified, diag: diag });
+        return otextResponse(true, summary, { count: aligned, verified: verified });
     } catch (error) {
         return otextResponse(false, error.message || String(error));
     }
