@@ -4,6 +4,7 @@
     var DEFAULTS = {
         scale: 100,
         seed: 42,
+        uniquePoints: true,
         removeDonor: false
     };
 
@@ -27,6 +28,7 @@
         scaleRange: document.getElementById("scaleRange"),
         seed: document.getElementById("seed"),
         seedRange: document.getElementById("seedRange"),
+        uniquePoints: document.getElementById("uniquePoints"),
         removeDonor: document.getElementById("removeDonor")
     };
 
@@ -183,12 +185,14 @@
         return {
             scale: fields.scale.value,
             seed: fields.seed.value,
+            uniquePoints: !!fields.uniquePoints.checked,
             removeDonor: !!fields.removeDonor.checked
         };
     }
     function saveSettings() { safeStorageSet(JSON.stringify(getSnapshot())); }
 
     function applySnapshot(snap) {
+        fields.uniquePoints.checked = (snap.uniquePoints === undefined) ? DEFAULTS.uniquePoints : !!snap.uniquePoints;
         fields.removeDonor.checked = !!snap.removeDonor;
         SLIDER_PAIRS.forEach(function (pair) { syncPair(pair[0], pair[1], snap[pair[0]]); });
     }
@@ -458,6 +462,7 @@
         return {
             scale: scale,
             seed: seed,
+            uniquePoints: !!fields.uniquePoints.checked,
             removeDonor: !!fields.removeDonor.checked
         };
     }
@@ -701,6 +706,10 @@
     SLIDER_PAIRS.forEach(function (pair) { bindSliderPair(pair[0], pair[1]); });
     fields.removeDonor.addEventListener("change", function () {
         saveSettings();
+    });
+    fields.uniquePoints.addEventListener("change", function () {
+        saveSettings();
+        if (state.active) schedulePreviewUpdate();
     });
 
     buttons.scaleReset.addEventListener("click", function () {

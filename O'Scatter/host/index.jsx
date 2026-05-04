@@ -63,6 +63,7 @@ function oscatterValidateConfig(config) {
     return {
         scale: parseFloat(config.scale) || 100,
         seed: parseInt(config.seed, 10) || 0,
+        uniquePoints: (config.uniquePoints === undefined) ? true : !!config.uniquePoints,
         removeDonor: !!config.removeDonor
     };
 }
@@ -186,6 +187,19 @@ function oscatterRedraw(config) {
     var anchors = [];
     for (var i = 0; i < oscatterSession.donors.length; i++) {
         try { oscatterCollectAnchors(oscatterSession.donors[i], anchors); } catch (eA) {}
+    }
+
+    if (config.uniquePoints) {
+        var seen = {};
+        var deduped = [];
+        for (var di = 0; di < anchors.length; di++) {
+            // Bucket to 0.01 px so near-identical points (closed-path overlaps) collapse
+            var k = Math.round(anchors[di][0] * 100) + "_" + Math.round(anchors[di][1] * 100);
+            if (seen[k]) continue;
+            seen[k] = true;
+            deduped.push(anchors[di]);
+        }
+        anchors = deduped;
     }
 
     var scale = config.scale;
