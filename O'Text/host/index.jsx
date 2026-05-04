@@ -99,33 +99,17 @@ function otextAlign(encodedConfig) {
                 }
             } catch (eH) {}
 
-            // 3. Apply justification — paragraph-level is canonical, others are fallbacks
-            var applied = false;
+            // 3. Apply justification through every available channel — no early break,
+            //    because some channels can silently no-op for LEFT while accepting CENTER/RIGHT.
             try {
                 var paragraphs = tf.story.paragraphs;
                 for (var pp = 0; pp < paragraphs.length; pp++) {
-                    paragraphs[pp].paragraphAttributes.justification = targetAlign;
+                    try { paragraphs[pp].paragraphAttributes.justification = targetAlign; } catch (eP1) {}
                 }
-                applied = true;
-            } catch (eJ0) {}
-            if (!applied) {
-                try {
-                    tf.story.textRange.paragraphAttributes.justification = targetAlign;
-                    applied = true;
-                } catch (eJ1) {}
-            }
-            if (!applied) {
-                try {
-                    tf.story.textRange.justification = targetAlign;
-                    applied = true;
-                } catch (eJ2) {}
-            }
-            if (!applied) {
-                try {
-                    tf.textRange.justification = targetAlign;
-                    applied = true;
-                } catch (eJ3) {}
-            }
+            } catch (eP0) {}
+            try { tf.story.textRange.paragraphAttributes.justification = targetAlign; } catch (eP2) {}
+            try { tf.story.textRange.justification = targetAlign; } catch (eP3) {}
+            try { tf.textRange.justification = targetAlign; } catch (eP4) {}
 
             // 4. Restore hyphenation
             if (wasHyphenated) {
