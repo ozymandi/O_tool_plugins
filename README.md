@@ -55,8 +55,8 @@ PluginName/
 - [x] O'Fractal
 - [x] O'Nebula
 - [x] O'Scatter
-- [ ] O'Scatter_Symbol
-- [ ] O'BakeUI
+- [~] O'Scatter_Symbol (skipped — superseded by O'Scatter slot stack)
+- [x] O'BakeUI
 - [ ] O'Replace_Color
 - [ ] O'Replace_Light
 - [ ] O'LumeGradient
