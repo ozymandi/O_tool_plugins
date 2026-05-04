@@ -54,7 +54,7 @@ PluginName/
 - [x] O'Atractor
 - [x] O'Fractal
 - [x] O'Nebula
-- [ ] O'Scatter
+- [x] O'Scatter
 - [ ] O'Scatter_Symbol
 - [ ] O'BakeUI
 - [ ] O'Replace_Color

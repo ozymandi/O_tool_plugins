@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Scatter</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body class="is-idle">
+    <main class="app">
+        <section class="panel" data-lockable>
+            <h2>Items</h2>
+            <div id="itemStack" class="stack-list"></div>
+            <div class="children-actions">
+                <button id="addSlotBtn" class="stack-add-btn" type="button">+ ADD SLOT</button>
+                <button id="addClipboardBtn" class="stack-add-btn" type="button">+ FROM CLIPBOARD</button>
+            </div>
+            <p class="sub">Each anchor point of the donor receives a randomly-picked symbol from the filled slots. Empty slots are skipped.</p>
+        </section>
+
+        <section class="panel" data-lockable>
+            <h2>Settings</h2>
+            <label class="field">
+                <span class="field-label">Scale (%)</span>
+                <div class="slider-capsule">
+                    <input id="scale" type="number" min="1" max="500" step="1" value="100">
+                    <div class="slider-track-area">
+                        <input id="scaleRange" type="range" min="1" max="200" step="1" value="100">
+                    </div>
+                    <button id="scaleResetBtn" class="slider-reset-btn" type="button" title="Reset to 100">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Random seed</span>
+                <div class="slider-capsule">
+                    <input id="seed" type="number" min="0" max="999999" step="1" value="42">
+                    <div class="slider-track-area">
+                        <input id="seedRange" type="range" min="0" max="9999" step="1" value="42">
+                    </div>
+                    <button id="seedResetBtn" class="slider-reset-btn" type="button" title="Reset to 42">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </label>
+            <label class="check">
+                <input id="removeDonor" type="checkbox">
+                <span>Remove donor object(s) on apply</span>
+            </label>
+        </section>
+
+        <section class="panel">
+            <div class="action-row">
+                <button id="primaryBtn" class="primary action-btn" type="button">SCATTER</button>
+                <button id="cancelBtn" class="action-btn" type="button" data-show-active disabled>CANCEL</button>
+                <button id="resetBtn" class="action-btn" type="button" data-show-active disabled>RESET</button>
+            </div>
+            <p class="sub" id="actionHint">Copy an object (Ctrl+C), select donor path(s), then press SCATTER. The clipboard becomes the first slot.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">RESET re-rolls the random seed. APPLY commits the preview (and removes donors if checked). CANCEL discards.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>
