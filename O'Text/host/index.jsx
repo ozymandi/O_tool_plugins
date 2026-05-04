@@ -183,9 +183,26 @@ function otextAlign(encodedConfig) {
             try { stillWrong = (tf.paragraphs[0].justification !== targetAlign); } catch (eCheck) {}
             if (stillWrong) {
                 var menuCandidates = [];
-                if (key === "L") menuCandidates = ["Left Justify", "Justify Left", "JustifyLeft", "left", "AI Style: Type Align Left"];
-                else if (key === "C") menuCandidates = ["Center Justify", "Justify Center", "JustifyCenter", "center"];
-                else if (key === "R") menuCandidates = ["Right Justify", "Justify Right", "JustifyRight", "right"];
+                if (key === "L") menuCandidates = [
+                    "Left Justify", "Justify Left", "JustifyLeft", "LeftJustify",
+                    "Left Align", "Align Left", "LeftAlign", "AlignLeft",
+                    "Type Align Left", "TypeAlignLeft", "Text Align Left", "TextAlignLeft",
+                    "Paragraph Left Align", "Para Align Left", "Paragraph Justify Left",
+                    "AI Style: Type Align Left", "AI Justify Left", "AI Align Left",
+                    "leftalign", "left align", "left-align", "left", "leftJustify"
+                ];
+                else if (key === "C") menuCandidates = [
+                    "Center Justify", "Justify Center", "JustifyCenter", "CenterJustify",
+                    "Center Align", "Align Center", "CenterAlign", "AlignCenter",
+                    "Type Align Center", "TypeAlignCenter", "AI Justify Center",
+                    "centeralign", "center align", "center"
+                ];
+                else if (key === "R") menuCandidates = [
+                    "Right Justify", "Justify Right", "JustifyRight", "RightJustify",
+                    "Right Align", "Align Right", "RightAlign", "AlignRight",
+                    "Type Align Right", "TypeAlignRight", "AI Justify Right",
+                    "rightalign", "right align", "right"
+                ];
 
                 // Save current document selection so we can restore it
                 var savedSel = [];
@@ -220,6 +237,36 @@ function otextAlign(encodedConfig) {
                     try { savedSel[rs].selected = true; } catch (eRr) {}
                 }
             }
+
+            // Channel F: detach paragraph style, then re-apply target. Sometimes a
+            // user-applied paragraph style holds an override that the scripting
+            // setters cannot punch through. Resetting to [No Paragraph Style]
+            // clears the override and the next assignment usually sticks.
+            var stillWrong2 = false;
+            try { stillWrong2 = (tf.paragraphs[0].justification !== targetAlign); } catch (eF0) {}
+            if (stillWrong2) {
+                try {
+                    var noStyle = doc.paragraphStyles[0]; // index 0 is [No Paragraph Style]
+                    var pF = tf.paragraphs;
+                    for (var pFi = 0; pFi < pF.length; pFi++) {
+                        try {
+                            var preStyle;
+                            try { preStyle = String(pF[pFi].justification); } catch (eFp1) { preStyle = "?"; }
+                            pF[pFi].paragraphStyle = noStyle;
+                            try { pF[pFi].justification = targetAlign; } catch (eFp2) {}
+                            try { pF[pFi].paragraphAttributes.justification = targetAlign; } catch (eFp3) {}
+                            var postStyle;
+                            try { postStyle = String(pF[pFi].justification); } catch (eFp4) { postStyle = "?"; }
+                            otextLog("  F[" + pFi + "] " + preStyle + " -> " + postStyle);
+                        } catch (eF1) { otextLog("  F[" + pFi + "] err: " + eF1.message); }
+                    }
+                } catch (eF) { otextLog("  F err: " + eF.message); }
+            }
+
+            // Final read
+            try {
+                otextLog("  FINAL: tf.paragraphs[0].justification=" + String(tf.paragraphs[0].justification));
+            } catch (eFR) {}
 
             // 4. Restore hyphenation
             if (wasHyphenated) {
