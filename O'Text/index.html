@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Text</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+    <main class="app">
+        <section class="panel">
+            <h2>Smart Align</h2>
+            <div class="align-row">
+                <button id="leftBtn" class="action-btn" type="button" data-align="L">LEFT</button>
+                <button id="centerBtn" class="primary action-btn" type="button" data-align="C">CENTER</button>
+                <button id="rightBtn" class="action-btn" type="button" data-align="R">RIGHT</button>
+            </div>
+            <p class="sub">Aligns text without visual shifting — keeps each frame's center pinned. Works on rotated text and frames inside groups.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">Hyphenation is auto-toggled around the alignment change to avoid Illustrator's reflow bug.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>

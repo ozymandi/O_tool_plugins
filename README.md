@@ -50,7 +50,7 @@ PluginName/
 - [x] O'Vertex
 - [x] O'Voron
 - [x] O'Symbol
-- [ ] O'Text
+- [x] O'Text
 - [ ] O'Atractor
 - [ ] O'Fractal
 - [ ] O'Nebula
