@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'Fractal</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body class="is-idle">
+    <main class="app">
+        <section class="panel">
+            <h2>Presets</h2>
+            <div class="preset-row">
+                <div class="simple-dropdown custom-select-wrapper" data-id="preset">
+                    <input id="preset" type="hidden" value="-- Default --">
+                    <div class="custom-select ui-dropdown-toggle" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                        <span id="presetLabel" class="ui-dropdown-label">-- Default --</span>
+                        <span class="dropdown-chevron" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4.5 6.5L8 10L11.5 6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div id="presetOptions" class="custom-options ui-dropdown-list" role="listbox" aria-label="Preset"></div>
+                </div>
+                <button id="savePresetBtn" class="preset-btn" type="button" title="Save current settings as a preset">SAVE</button>
+                <button id="deletePresetBtn" class="preset-btn" type="button" title="Delete selected preset" disabled>DEL</button>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="tab-strip" role="tablist">
+                <button class="tab-btn is-active" type="button" data-tab="fractal">FRACTAL</button>
+                <button class="tab-btn" type="button" data-tab="children">CHILDREN</button>
+                <button class="tab-btn" type="button" data-tab="instances">INSTANCES</button>
+            </div>
+        </section>
+
+        <!-- FRACTAL TAB -->
+        <section class="panel" data-lockable data-tab-pane="fractal">
+            <h2>Fractal</h2>
+            <label class="field">
+                <span class="field-label">Iterations</span>
+                <div class="slider-capsule">
+                    <input id="iterations" type="number" min="1" max="14" step="1" value="7">
+                    <div class="slider-track-area"><input id="iterationsRange" type="range" min="1" max="12" step="1" value="7"></div>
+                    <button id="iterationsResetBtn" class="slider-reset-btn" type="button" title="Reset to 7">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Base length (pt)</span>
+                <div class="slider-capsule">
+                    <input id="baseLength" type="number" min="1" max="2000" step="1" value="100">
+                    <div class="slider-track-area"><input id="baseLengthRange" type="range" min="10" max="500" step="1" value="100"></div>
+                    <button id="baseLengthResetBtn" class="slider-reset-btn" type="button" title="Reset to 100">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Branch angle (deg)</span>
+                <div class="slider-capsule">
+                    <input id="branchAngle" type="number" min="0" max="360" step="1" value="35">
+                    <div class="slider-track-area"><input id="branchAngleRange" type="range" min="0" max="180" step="1" value="35"></div>
+                    <button id="branchAngleResetBtn" class="slider-reset-btn" type="button" title="Reset to 35">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Length scale (%)</span>
+                <div class="slider-capsule">
+                    <input id="lenScale" type="number" min="1" max="200" step="1" value="75">
+                    <div class="slider-track-area"><input id="lenScaleRange" type="range" min="10" max="100" step="1" value="75"></div>
+                    <button id="lenScaleResetBtn" class="slider-reset-btn" type="button" title="Reset to 75">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Twist angle (deg)</span>
+                <div class="slider-capsule">
+                    <input id="twistAngle" type="number" min="-360" max="360" step="1" value="0">
+                    <div class="slider-track-area"><input id="twistAngleRange" type="range" min="-180" max="180" step="1" value="0"></div>
+                    <button id="twistAngleResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Base stroke (pt)</span>
+                <div class="slider-capsule">
+                    <input id="baseStroke" type="number" min="0.1" max="500" step="0.1" value="10">
+                    <div class="slider-track-area"><input id="baseStrokeRange" type="range" min="0.1" max="100" step="0.1" value="10"></div>
+                    <button id="baseStrokeResetBtn" class="slider-reset-btn" type="button" title="Reset to 10">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Stroke scale (%)</span>
+                <div class="slider-capsule">
+                    <input id="strokeScale" type="number" min="1" max="200" step="1" value="70">
+                    <div class="slider-track-area"><input id="strokeScaleRange" type="range" min="10" max="100" step="1" value="70"></div>
+                    <button id="strokeScaleResetBtn" class="slider-reset-btn" type="button" title="Reset to 70">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Brightness shift (%)</span>
+                <div class="slider-capsule">
+                    <input id="brightShift" type="number" min="-200" max="200" step="1" value="50">
+                    <div class="slider-track-area"><input id="brightShiftRange" type="range" min="-100" max="100" step="1" value="50"></div>
+                    <button id="brightShiftResetBtn" class="slider-reset-btn" type="button" title="Reset to 50">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="check">
+                <input id="forceBranch" type="checkbox">
+                <span>Force trunk / branch (thicken first 2 levels)</span>
+            </label>
+            <label class="field">
+                <span class="field-label">Force multiplier</span>
+                <div class="slider-capsule">
+                    <input id="forceMult" type="number" min="1.0" max="10.0" step="0.1" value="2.0">
+                    <div class="slider-track-area"><input id="forceMultRange" type="range" min="1.1" max="5.0" step="0.1" value="2.0"></div>
+                    <button id="forceMultResetBtn" class="slider-reset-btn" type="button" title="Reset to 2.0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Divide branch (extra segments)</span>
+                <div class="slider-capsule">
+                    <input id="divide" type="number" min="0" max="20" step="1" value="0">
+                    <div class="slider-track-area"><input id="divideRange" type="range" min="0" max="10" step="1" value="0"></div>
+                    <button id="divideResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Tangent curve</span>
+                <div class="slider-capsule">
+                    <input id="tangentBase" type="number" min="-300" max="300" step="1" value="0">
+                    <div class="slider-track-area"><input id="tangentBaseRange" type="range" min="-150" max="150" step="1" value="0"></div>
+                    <button id="tangentBaseResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="check">
+                <input id="checkerTangent" type="checkbox" checked>
+                <span>Checker tangent (alternate sign per level)</span>
+            </label>
+            <label class="field">
+                <span class="field-label">Tangent random</span>
+                <div class="slider-capsule">
+                    <input id="tangentRandom" type="number" min="0" max="300" step="1" value="0">
+                    <div class="slider-track-area"><input id="tangentRandomRange" type="range" min="0" max="150" step="1" value="0"></div>
+                    <button id="tangentRandomResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Random seed</span>
+                <div class="slider-capsule">
+                    <input id="seed" type="number" min="1" max="99999" step="1" value="42">
+                    <div class="slider-track-area"><input id="seedRange" type="range" min="1" max="9999" step="1" value="42"></div>
+                    <button id="seedResetBtn" class="slider-reset-btn" type="button" title="Reset to 42">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+        </section>
+
+        <!-- CHILDREN TAB -->
+        <section class="panel" data-lockable data-tab-pane="children" hidden>
+            <h2>Children</h2>
+            <button id="addChildrenBtn" class="action-btn" type="button">ADD CHILDREN OBJECTS</button>
+            <p id="childrenStatus" class="children-status">No objects loaded</p>
+            <label class="field">
+                <span class="field-label">Apply to N levels (from tip)</span>
+                <div class="slider-capsule">
+                    <input id="cLevels" type="number" min="1" max="14" step="1" value="1">
+                    <div class="slider-track-area"><input id="cLevelsRange" type="range" min="1" max="12" step="1" value="1"></div>
+                    <button id="cLevelsResetBtn" class="slider-reset-btn" type="button" title="Reset to 1">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Children per node</span>
+                <div class="slider-capsule">
+                    <input id="cPerNode" type="number" min="1" max="20" step="1" value="1">
+                    <div class="slider-track-area"><input id="cPerNodeRange" type="range" min="1" max="10" step="1" value="1"></div>
+                    <button id="cPerNodeResetBtn" class="slider-reset-btn" type="button" title="Reset to 1">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Shift X (pt)</span>
+                <div class="slider-capsule">
+                    <input id="cShiftX" type="number" min="-500" max="500" step="1" value="0">
+                    <div class="slider-track-area"><input id="cShiftXRange" type="range" min="-200" max="200" step="1" value="0"></div>
+                    <button id="cShiftXResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Shift Y (pt)</span>
+                <div class="slider-capsule">
+                    <input id="cShiftY" type="number" min="-500" max="500" step="1" value="0">
+                    <div class="slider-track-area"><input id="cShiftYRange" type="range" min="-200" max="200" step="1" value="0"></div>
+                    <button id="cShiftYResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Shift random (± pt)</span>
+                <div class="slider-capsule">
+                    <input id="cShiftRand" type="number" min="0" max="500" step="1" value="0">
+                    <div class="slider-track-area"><input id="cShiftRandRange" type="range" min="0" max="200" step="1" value="0"></div>
+                    <button id="cShiftRandResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Rotation offset (deg)</span>
+                <div class="slider-capsule">
+                    <input id="cRot" type="number" min="-360" max="360" step="1" value="0">
+                    <div class="slider-track-area"><input id="cRotRange" type="range" min="-180" max="180" step="1" value="0"></div>
+                    <button id="cRotResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Rotation random (± deg)</span>
+                <div class="slider-capsule">
+                    <input id="cRotRand" type="number" min="0" max="360" step="1" value="0">
+                    <div class="slider-track-area"><input id="cRotRandRange" type="range" min="0" max="180" step="1" value="0"></div>
+                    <button id="cRotRandResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Scale X (%)</span>
+                <div class="slider-capsule">
+                    <input id="cScaleX" type="number" min="1" max="1000" step="1" value="100">
+                    <div class="slider-track-area"><input id="cScaleXRange" type="range" min="1" max="500" step="1" value="100"></div>
+                    <button id="cScaleXResetBtn" class="slider-reset-btn" type="button" title="Reset to 100">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Scale Y (%)</span>
+                <div class="slider-capsule">
+                    <input id="cScaleY" type="number" min="1" max="1000" step="1" value="100">
+                    <div class="slider-track-area"><input id="cScaleYRange" type="range" min="1" max="500" step="1" value="100"></div>
+                    <button id="cScaleYResetBtn" class="slider-reset-btn" type="button" title="Reset to 100">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Scale random (± %)</span>
+                <div class="slider-capsule">
+                    <input id="cScaleRand" type="number" min="0" max="500" step="1" value="0">
+                    <div class="slider-track-area"><input id="cScaleRandRange" type="range" min="0" max="200" step="1" value="0"></div>
+                    <button id="cScaleRandResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Opacity (%)</span>
+                <div class="slider-capsule">
+                    <input id="cOpac" type="number" min="0" max="100" step="1" value="100">
+                    <div class="slider-track-area"><input id="cOpacRange" type="range" min="0" max="100" step="1" value="100"></div>
+                    <button id="cOpacResetBtn" class="slider-reset-btn" type="button" title="Reset to 100">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Opacity random (± %)</span>
+                <div class="slider-capsule">
+                    <input id="cOpacRand" type="number" min="0" max="100" step="1" value="0">
+                    <div class="slider-track-area"><input id="cOpacRandRange" type="range" min="0" max="100" step="1" value="0"></div>
+                    <button id="cOpacRandResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Hue random (± deg)</span>
+                <div class="slider-capsule">
+                    <input id="cHueRand" type="number" min="0" max="360" step="1" value="0">
+                    <div class="slider-track-area"><input id="cHueRandRange" type="range" min="0" max="180" step="1" value="0"></div>
+                    <button id="cHueRandResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+        </section>
+
+        <!-- INSTANCES TAB -->
+        <section class="panel" data-lockable data-tab-pane="instances" hidden>
+            <h2>Instances</h2>
+            <label class="field">
+                <span class="field-label">Instances count</span>
+                <div class="slider-capsule">
+                    <input id="iCount" type="number" min="1" max="50" step="1" value="1">
+                    <div class="slider-track-area"><input id="iCountRange" type="range" min="1" max="10" step="1" value="1"></div>
+                    <button id="iCountResetBtn" class="slider-reset-btn" type="button" title="Reset to 1">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Scale factor (%)</span>
+                <div class="slider-capsule">
+                    <input id="iScale" type="number" min="1" max="500" step="1" value="80">
+                    <div class="slider-track-area"><input id="iScaleRange" type="range" min="10" max="200" step="1" value="80"></div>
+                    <button id="iScaleResetBtn" class="slider-reset-btn" type="button" title="Reset to 80">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Shift X per inst (pt)</span>
+                <div class="slider-capsule">
+                    <input id="iShiftX" type="number" min="-500" max="500" step="1" value="0">
+                    <div class="slider-track-area"><input id="iShiftXRange" type="range" min="-200" max="200" step="1" value="0"></div>
+                    <button id="iShiftXResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Shift Y per inst (pt)</span>
+                <div class="slider-capsule">
+                    <input id="iShiftY" type="number" min="-500" max="500" step="1" value="-20">
+                    <div class="slider-track-area"><input id="iShiftYRange" type="range" min="-200" max="200" step="1" value="-20"></div>
+                    <button id="iShiftYResetBtn" class="slider-reset-btn" type="button" title="Reset to -20">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Random step (seed)</span>
+                <div class="slider-capsule">
+                    <input id="iRand" type="number" min="0" max="500" step="1" value="0">
+                    <div class="slider-track-area"><input id="iRandRange" type="range" min="0" max="100" step="1" value="0"></div>
+                    <button id="iRandResetBtn" class="slider-reset-btn" type="button" title="Reset to 0">
+                        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </label>
+            <label class="field">
+                <span class="field-label">Z-order</span>
+                <div class="simple-dropdown custom-select-wrapper" data-id="iStack">
+                    <input id="iStack" type="hidden" value="0">
+                    <div class="custom-select ui-dropdown-toggle" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                        <span id="iStackLabel" class="ui-dropdown-label">Behind original</span>
+                        <span class="dropdown-chevron" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4.5 6.5L8 10L11.5 6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div id="iStackOptions" class="custom-options ui-dropdown-list" role="listbox" aria-label="Z-order">
+                        <div class="custom-option" data-value="0" role="option" aria-selected="true">Behind original</div>
+                        <div class="custom-option" data-value="1" role="option" aria-selected="false">In front of original</div>
+                    </div>
+                </div>
+            </label>
+            <label class="check">
+                <input id="iIncChild" type="checkbox">
+                <span>Include children in randomization</span>
+            </label>
+            <label class="check">
+                <input id="iFlip" type="checkbox">
+                <span>Flip alternate instances</span>
+            </label>
+        </section>
+
+        <section class="panel">
+            <div class="action-row">
+                <button id="primaryBtn" class="primary action-btn" type="button">GENERATE</button>
+                <button id="cancelBtn" class="action-btn" type="button" data-show-active disabled>CANCEL</button>
+                <button id="resetBtn" class="action-btn" type="button" data-show-active disabled>RESET</button>
+            </div>
+            <button id="bakeBtn" class="action-btn" type="button" data-show-active disabled>BAKE TO SYMBOL</button>
+            <p class="sub" id="actionHint">Optional: select an anchor point to set origin/angle. Then press GENERATE to start a live preview.</p>
+        </section>
+
+        <section class="panel">
+            <div class="status-row">
+                <div class="status-left">
+                    <span id="statusDot" class="status-indicator status-indicator--info"></span>
+                    <div id="status" class="status" title="Connecting to Illustrator...">Connecting to Illustrator...</div>
+                </div>
+            </div>
+            <p class="footer-note">RESET re-rolls the seed. ADD CHILDREN OBJECTS pastes from clipboard and uses the result as a child-symbol pool. APPLY commits the preview as a final group.</p>
+        </section>
+    </main>
+
+    <script src="./js/main.js"></script>
+</body>
+</html>

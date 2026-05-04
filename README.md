@@ -52,7 +52,7 @@ PluginName/
 - [x] O'Symbol
 - [x] O'Text
 - [x] O'Atractor
-- [ ] O'Fractal
+- [x] O'Fractal
 - [ ] O'Nebula
 - [ ] O'Scatter
 - [ ] O'Scatter_Symbol
